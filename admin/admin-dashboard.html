@@ -302,63 +302,90 @@
             </section>
 
 
-            <!-- =================================================
-                 NOTICES
-                 ================================================= -->
+           
+<!-- =================================================
+     NOTIFICATIONS
+     ================================================= -->
 
-            <section
-                class="
-                    panel-card
-                    dashboard-notifications
-                "
-            >
+<section
+    class="
+        panel-card
+        dashboard-notifications
+    "
+>
 
-                <div
-                    class="dashboard-section-header"
-                >
+    <div
+        class="
+            panel-card-header
+            dashboard-notifications-header
+        "
+    >
 
-                    <div>
+        <div>
 
-                        <h2>
-                            Library Notices
-                        </h2>
+            <h2>
+                Notifications
+            </h2>
 
-                        <p>
-                            Manage important announcements for your library.
-                        </p>
+            <p>
+                Fee due dates and shift-wise student updates
+            </p>
 
-                    </div>
+        </div>
 
-
-                    <button
-                        type="button"
-                        id="btn-add-notice"
-                        class="primary-btn"
-                    >
-                        + Add Notice
-                    </button>
-
-                </div>
+    </div>
 
 
-                <div
-                    id="dashboard-notification-list"
-                    class="dashboard-notification-list"
-                >
+    <div
+        id="dashboard-notification-list"
+        class="dashboard-notification-list"
+    >
 
-                    <div
-                        class="empty-state-text"
-                    >
-                        No notices available right now.
-                    </div>
+        <!-- =================================================
+             FEE DUE NOTIFICATION
+             ================================================= -->
 
-                </div>
+        <div class="notification-item">
 
-            </section>
+            <div class="notification-item-content">
+
+                <strong>
+                    Fee Due
+                </strong>
+
+                <p>
+                    Loading fee due notifications...
+                </p>
+
+            </div>
+
+        </div>
 
 
-        </main>
+        <!-- =================================================
+             SHIFT-WISE NOTIFICATION
+             ================================================= -->
 
+        <div class="notification-item">
+
+            <div class="notification-item-content">
+
+                <strong>
+                    Shift-wise Students
+                </strong>
+
+                <p>
+                    Loading shift-wise student information...
+                </p>
+
+            </div>
+
+        </div>
+
+
+    </div>
+
+</section>
 
         <!-- =================================================
              FOOTER
