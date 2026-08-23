@@ -5,21 +5,32 @@
  *
  * DEVELOPMENT VERSION
  *
- * Current login:
- * Admin Email + Password
+ * ADMIN LOGIN:
+ * Email + Password
  *
- * No:
- * - Library ID
+ * REMOVED:
+ * - Library ID login
  * - Student Login
  * - Attendance
  * - Manager Login
+ * - Notice system
  *
- * Firebase Authentication = real authentication
- * Firestore = Admin profile / library data
+ * CURRENT:
+ * - Firebase Authentication
+ * - Admin session
+ * - Single personal library
+ * - Students
+ * - Student History
+ * - Seats
+ * - Notifications
  *
  * EMAIL VERIFICATION:
- * Temporarily disabled for development.
- * Enable before production.
+ * Temporarily disabled during development.
+ *
+ * IMPORTANT:
+ * Before production, enable email verification in:
+ * adminLogin()
+ * requireAdminSession()
  * ==========================================================================
  */
 
@@ -93,19 +104,20 @@ const firebaseConfig = {
             firebase.auth();
 
 
-        window.auth.setPersistence(
-            firebase.auth.Auth.Persistence.LOCAL
-        )
-        .catch(
-            function (error) {
+        window.auth
+            .setPersistence(
+                firebase.auth.Auth.Persistence.LOCAL
+            )
+            .catch(
+                function (error) {
 
-                console.error(
-                    "[Adhyayn] Auth persistence error:",
-                    error
-                );
+                    console.error(
+                        "[Adhyayn] Auth persistence error:",
+                        error
+                    );
 
-            }
-        );
+                }
+            );
 
 
         window.firebaseConfig =
@@ -130,16 +142,16 @@ const firebaseConfig = {
 
 
 /* ==========================================================================
-   3. APPLICATION SETTINGS
+   3. APPLICATION CONFIGURATION
    ========================================================================== */
 
 /*
- * Temporary development library.
+ * This is the internal library document.
  *
- * This is NOT shown to the Admin.
+ * Admin does NOT enter this ID.
  *
- * Later, when the final library structure is ready,
- * this can be replaced by the real library configuration.
+ * This is only used internally so the personal
+ * Adhyayn Library data remains separated.
  */
 
 const ADHYAYN_LIBRARY_ID =
@@ -204,12 +216,14 @@ function getCurrentSession() {
         libraryId:
             localStorage.getItem(
                 SESSION_KEYS.libraryId
-            ),
+            ) ||
+            ADHYAYN_LIBRARY_ID,
 
         libraryName:
             localStorage.getItem(
                 SESSION_KEYS.libraryName
-            )
+            ) ||
+            "Adhyayn Library"
 
     };
 
@@ -221,7 +235,29 @@ window.getCurrentSession =
 
 
 /* ==========================================================================
-   6. CLEAR SESSION
+   6. LIBRARY ID NORMALIZER
+   ========================================================================== */
+
+function normalizeLibraryId(
+    value
+) {
+
+    return String(
+        value ||
+        ADHYAYN_LIBRARY_ID
+    )
+        .trim()
+        .toUpperCase();
+
+}
+
+
+window.normalizeLibraryId =
+    normalizeLibraryId;
+
+
+/* ==========================================================================
+   7. CLEAR ADMIN SESSION
    ========================================================================== */
 
 function clearAdminSession() {
@@ -247,7 +283,7 @@ window.clearAdminSession =
 
 
 /* ==========================================================================
-   7. ADMIN FIRESTORE REFERENCE
+   8. ADMIN FIRESTORE REFERENCE
    ========================================================================== */
 
 function adminReference(
@@ -291,11 +327,17 @@ function adminReference(
 }
 
 
+window.adminReference =
+    adminReference;
+
+
 /* ==========================================================================
-   8. LIBRARY REFERENCE
+   9. LIBRARY REFERENCE
    ========================================================================== */
 
-function libraryReference() {
+function libraryReference(
+    libraryId
+) {
 
     if (
         !window.db
@@ -308,19 +350,169 @@ function libraryReference() {
     }
 
 
+    const id =
+        normalizeLibraryId(
+            libraryId
+        );
+
+
     return window.db
         .collection(
             ADHYAYN_LIBRARY_COLLECTION
         )
         .doc(
-            ADHYAYN_LIBRARY_ID
+            id
         );
 
 }
 
 
+window.libraryReference =
+    libraryReference;
+
+
+/*
+ * Compatibility alias.
+ *
+ * Existing dashboard pages may use libraryRef().
+ */
+
+function libraryRef(
+    libraryId
+) {
+
+    return libraryReference(
+        libraryId
+    );
+
+}
+
+
+window.libraryRef =
+    libraryRef;
+
+
 /* ==========================================================================
-   9. WAIT FOR AUTH USER
+   10. LIBMANAGE DATABASE API
+   ========================================================================== */
+
+window.LibManageDB = {
+
+    library:
+        function (libraryId) {
+
+            return libraryReference(
+                libraryId
+            );
+
+        },
+
+
+    students:
+        function (libraryId) {
+
+            return libraryReference(
+                libraryId
+            )
+            .collection(
+                "students"
+            );
+
+        },
+
+
+    student:
+        function (
+            libraryId,
+            studentCode
+        ) {
+
+            return libraryReference(
+                libraryId
+            )
+            .collection(
+                "students"
+            )
+            .doc(
+                String(
+                    studentCode
+                )
+                .trim()
+                .toUpperCase()
+            );
+
+        },
+
+
+    studentHistory:
+        function (libraryId) {
+
+            return libraryReference(
+                libraryId
+            )
+            .collection(
+                "student_history"
+            );
+
+        },
+
+
+    seats:
+        function (libraryId) {
+
+            return libraryReference(
+                libraryId
+            )
+            .collection(
+                "seats"
+            );
+
+        },
+
+
+    seat:
+        function (
+            libraryId,
+            seatId
+        ) {
+
+            return libraryReference(
+                libraryId
+            )
+            .collection(
+                "seats"
+            )
+            .doc(
+                String(
+                    seatId
+                )
+            );
+
+        },
+
+
+    notifications:
+        function (libraryId) {
+
+            return libraryReference(
+                libraryId
+            )
+            .collection(
+                "notifications"
+            );
+
+        }
+
+};
+
+
+console.log(
+    "[Adhyayn] LibManageDB initialized."
+);
+
+
+/* ==========================================================================
+   11. WAIT FOR FIREBASE AUTH USER
    ========================================================================== */
 
 function waitForFirebaseAuthUser(
@@ -356,7 +548,9 @@ function waitForFirebaseAuthUser(
                     function () {
 
                         if (finished) {
+
                             return;
+
                         }
 
 
@@ -393,7 +587,9 @@ function waitForFirebaseAuthUser(
                         function (user) {
 
                             if (finished) {
+
                                 return;
+
                             }
 
 
@@ -435,7 +631,147 @@ window.waitForFirebaseAuthUser =
 
 
 /* ==========================================================================
-   10. ADMIN LOGIN
+   12. ADMIN AUTHORIZATION
+   ========================================================================== */
+
+async function getAdminAuthorization(
+    user,
+    libraryId
+) {
+
+    if (!user) {
+
+        return {
+
+            authorized: false,
+
+            reason:
+                "Admin user is not authenticated."
+
+        };
+
+    }
+
+
+    const normalizedLibraryId =
+        normalizeLibraryId(
+            libraryId
+        );
+
+
+    /*
+     * Personal library:
+     *
+     * The authenticated Firebase account itself
+     * is the Admin account.
+     */
+
+    if (
+        normalizedLibraryId !==
+        ADHYAYN_LIBRARY_ID
+    ) {
+
+        return {
+
+            authorized: false,
+
+            reason:
+                "Invalid library context."
+
+        };
+
+    }
+
+
+    try {
+
+        const adminSnapshot =
+            await adminReference(
+                user.uid
+            )
+            .get();
+
+
+        /*
+         * If an Admin profile exists,
+         * verify that it belongs to this library.
+         */
+
+        if (
+            adminSnapshot.exists
+        ) {
+
+            const adminData =
+                adminSnapshot.data() ||
+                {};
+
+
+            if (
+                adminData.libraryId &&
+                normalizeLibraryId(
+                    adminData.libraryId
+                ) !==
+                normalizedLibraryId
+            ) {
+
+                return {
+
+                    authorized: false,
+
+                    reason:
+                        "Admin is not authorized for this library."
+
+                };
+
+            }
+
+        }
+
+
+        return {
+
+            authorized: true,
+
+            admin:
+                adminSnapshot.exists
+                    ? adminSnapshot.data() || {}
+                    : {}
+
+        };
+
+    }
+    catch (error) {
+
+        console.error(
+            "[Adhyayn] Admin authorization error:",
+            error
+        );
+
+
+        /*
+         * During development, Firebase Authentication
+         * is the primary Admin authentication.
+         */
+
+        return {
+
+            authorized: true,
+
+            admin: {}
+
+        };
+
+    }
+
+}
+
+
+window.getAdminAuthorization =
+    getAdminAuthorization;
+
+
+/* ==========================================================================
+   13. ADMIN LOGIN
    ========================================================================== */
 
 async function adminLogin(
@@ -492,12 +828,6 @@ async function adminLogin(
 
     try {
 
-        /*
-         * ------------------------------------------------------
-         * Firebase Authentication
-         * ------------------------------------------------------
-         */
-
         const result =
             await window.auth
                 .signInWithEmailAndPassword(
@@ -520,26 +850,19 @@ async function adminLogin(
 
 
         /*
-         * ------------------------------------------------------
+         * ======================================================
          * DEVELOPMENT MODE
-         * ------------------------------------------------------
+         * ======================================================
          *
-         * Email verification is intentionally NOT checked here.
+         * Email verification is intentionally NOT required.
          *
-         * FINAL VERSION:
+         * Production:
          *
          * if (!user.emailVerified) {
-         *     ...
+         *     throw new Error(
+         *         "Please verify your Admin email first."
+         *     );
          * }
-         *
-         * ------------------------------------------------------
-         */
-
-
-        /*
-         * ------------------------------------------------------
-         * Admin Firestore profile
-         * ------------------------------------------------------
          */
 
         let adminData =
@@ -569,18 +892,12 @@ async function adminLogin(
         catch (profileError) {
 
             console.warn(
-                "[Adhyayn] Admin profile not found yet:",
+                "[Adhyayn] Admin profile could not be loaded:",
                 profileError
             );
 
         }
 
-
-        /*
-         * ------------------------------------------------------
-         * Create local session
-         * ------------------------------------------------------
-         */
 
         clearAdminSession();
 
@@ -729,7 +1046,7 @@ window.adminLogin =
 
 
 /* ==========================================================================
-   11. FORGOT PASSWORD
+   14. FORGOT PASSWORD
    ========================================================================== */
 
 async function sendAdminPasswordReset(
@@ -752,6 +1069,22 @@ async function sendAdminPasswordReset(
 
             message:
                 "Please enter your Admin email address."
+
+        };
+
+    }
+
+
+    if (
+        !window.auth
+    ) {
+
+        return {
+
+            success: false,
+
+            message:
+                "Firebase Authentication is unavailable."
 
         };
 
@@ -806,7 +1139,7 @@ window.sendAdminPasswordReset =
 
 
 /* ==========================================================================
-   12. ADMIN SESSION PROTECTION
+   15. ADMIN SESSION PROTECTION
    ========================================================================== */
 
 async function requireAdminSession() {
@@ -819,8 +1152,10 @@ async function requireAdminSession() {
 
         clearAdminSession();
 
+
         window.location.href =
-            "index.html";
+            "../index.html";
+
 
         return false;
 
@@ -838,8 +1173,10 @@ async function requireAdminSession() {
 
         clearAdminSession();
 
+
         window.location.href =
-            "index.html";
+            "../index.html";
+
 
         return false;
 
@@ -849,11 +1186,16 @@ async function requireAdminSession() {
     /*
      * Development mode:
      *
-     * Email verification is currently not required.
+     * Email verification is currently disabled.
      *
-     * Final production version will check:
+     * Production:
      *
-     * user.emailVerified
+     * if (!user.emailVerified) {
+     *     clearAdminSession();
+     *     await window.auth.signOut();
+     *     window.location.href = "../index.html";
+     *     return false;
+     * }
      */
 
 
@@ -867,7 +1209,7 @@ window.requireAdminSession =
 
 
 /* ==========================================================================
-   13. ADMIN LOGOUT
+   16. ADMIN LOGOUT
    ========================================================================== */
 
 async function logoutAdmin() {
@@ -898,7 +1240,7 @@ async function logoutAdmin() {
 
 
     window.location.href =
-        "index.html";
+        "../index.html";
 
 }
 
@@ -908,7 +1250,152 @@ window.logoutAdmin =
 
 
 /* ==========================================================================
-   14. LOGIN FORM
+   17. LAYOUT COMPONENT LOADER
+   ========================================================================== */
+
+async function loadSaaSLayoutComponent(
+    containerId,
+    componentPath
+) {
+
+    const container =
+        document.getElementById(
+            containerId
+        );
+
+
+    if (!container) {
+
+        return;
+
+    }
+
+
+    try {
+
+        const response =
+            await fetch(
+                componentPath,
+                {
+                    cache: "no-store"
+                }
+            );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                "Unable to load component: " +
+                response.status
+            );
+
+        }
+
+
+        container.innerHTML =
+            await response.text();
+
+    }
+    catch (error) {
+
+        console.error(
+            "[Adhyayn] Layout component error:",
+            error
+        );
+
+    }
+
+}
+
+
+window.loadSaaSLayoutComponent =
+    loadSaaSLayoutComponent;
+
+
+/* ==========================================================================
+   18. LIBRARY NAVIGATION
+   ========================================================================== */
+
+function initializeLibraryNavigation() {
+
+    const session =
+        getCurrentSession();
+
+
+    const libraryName =
+        session.libraryName ||
+        "Adhyayn Library";
+
+
+    document
+        .querySelectorAll(
+            "[data-library-name]"
+        )
+        .forEach(
+            function (element) {
+
+                element.textContent =
+                    libraryName;
+
+            }
+        );
+
+
+    document
+        .querySelectorAll(
+            ".sidebar-menu .menu-link"
+        )
+        .forEach(
+            function (link) {
+
+                const currentPage =
+                    window.location.pathname
+                        .split("/")
+                        .pop()
+                        .toLowerCase();
+
+
+                const linkPage =
+                    String(
+                        link.getAttribute(
+                            "href"
+                        ) ||
+                        ""
+                    )
+                    .split("/")
+                    .pop()
+                    .toLowerCase();
+
+
+                if (
+                    currentPage &&
+                    linkPage ===
+                    currentPage
+                ) {
+
+                    link
+                        .closest(
+                            ".menu-item"
+                        )
+                        ?.classList
+                        .add(
+                            "active"
+                        );
+
+                }
+
+            }
+        );
+
+}
+
+
+window.initializeLibraryNavigation =
+    initializeLibraryNavigation;
+
+
+/* ==========================================================================
+   19. LOGIN FORM
    ========================================================================== */
 
 function bindAdminLoginForm() {
@@ -956,6 +1443,35 @@ function bindAdminLoginForm() {
         form.querySelector(
             'button[type="submit"]'
         );
+
+
+    /*
+     * --------------------------------------------------------------
+     * DEVELOPMENT DEMO LOGIN
+     * --------------------------------------------------------------
+     *
+     * IMPORTANT:
+     * This does NOT create a Firebase account.
+     *
+     * The account must exist in Firebase Authentication.
+     *
+     * These values only pre-fill the login form.
+     */
+
+    if (emailInput) {
+
+        emailInput.value =
+            "demo@adhyayn.com";
+
+    }
+
+
+    if (passwordInput) {
+
+        passwordInput.value =
+            "Demo@12345";
+
+    }
 
 
     form.addEventListener(
@@ -1043,26 +1559,9 @@ function bindAdminLoginForm() {
 
 }
 
-/* =========================================================
-   DEVELOPMENT DEMO LOGIN
-   ========================================================= */
 
-if (emailInput) {
-
-    emailInput.value =
-        "demo@adhyayn.com";
-
-}
-
-
-if (passwordInput) {
-
-    passwordInput.value =
-        "Demo@12345";
-
-}
 /* ==========================================================================
-   15. FORGOT PASSWORD BUTTON
+   20. FORGOT PASSWORD BUTTON
    ========================================================================== */
 
 function bindForgotPassword() {
@@ -1143,10 +1642,33 @@ function bindForgotPassword() {
 
 
 /* ==========================================================================
-   16. AUTO LOGIN REDIRECTION
+   21. AUTO LOGIN REDIRECTION
    ========================================================================== */
 
 async function checkExistingAdminSession() {
+
+    /*
+     * Do not run this on Admin pages.
+     */
+
+    const currentFile =
+        window.location.pathname
+            .split("/")
+            .pop()
+            .toLowerCase();
+
+
+    if (
+        currentFile !==
+        "index.html" &&
+        currentFile !==
+        ""
+    ) {
+
+        return;
+
+    }
+
 
     const user =
         await waitForFirebaseAuthUser(
@@ -1179,7 +1701,7 @@ async function checkExistingAdminSession() {
 
 
 /* ==========================================================================
-   17. DOM READY
+   22. DOM READY
    ========================================================================== */
 
 document.addEventListener(
@@ -1197,7 +1719,7 @@ document.addEventListener(
 
 
 /* ==========================================================================
-   18. GLOBAL CORE OBJECT
+   23. GLOBAL CORE OBJECT
    ========================================================================== */
 
 window.AdhyaynCore = {
@@ -1227,7 +1749,7 @@ window.AdhyaynCore = {
 
 
 /* ==========================================================================
-   19. STATUS
+   24. STATUS
    ========================================================================== */
 
 console.log(
@@ -1240,4 +1762,8 @@ console.log(
 
 console.log(
     "[Adhyayn] Admin login uses Firebase Authentication."
+);
+
+console.log(
+    "[Adhyayn] Attendance and Notice systems are removed."
 );
