@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="theme-color"
+        content="#2563eb"
+    >
+
+    <meta
+        name="mobile-web-app-capable"
+        content="yes"
+    >
+
+    <meta
+        name="apple-mobile-web-app-capable"
+        content="yes"
+    >
+
+    <title>Adhyayn Library - Admin Login</title>
+
+
+    <!-- PWA -->
+
+    <link
+        rel="manifest"
+        href="manifest.json"
+    >
+
+
+    <!-- GOOGLE FONT -->
+
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
+
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+
+    <!-- GLOBAL CSS -->
+
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
+
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+
+        body {
+            margin: 0;
+
+            min-height: 100vh;
+
+            font-family: Inter, sans-serif;
+
+            background:
+                #f8fafc;
+        }
+
+
+        .admin-login-page {
+
+            min-height: 100vh;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            padding: 20px;
+
+        }
+
+
+        .admin-login-card {
+
+            width: 100%;
+
+            max-width: 430px;
+
+            background: #ffffff;
+
+            border:
+                1px solid #e5e7eb;
+
+            border-radius: 18px;
+
+            padding: 32px;
+
+            box-shadow:
+                0 20px 50px
+                rgba(15, 23, 42, 0.10);
+
+        }
+
+
+        .admin-brand {
+
+            text-align: center;
+
+            margin-bottom: 28px;
+
+        }
+
+
+        .admin-brand h1 {
+
+            margin:
+                0 0 7px;
+
+            font-size:
+                1.7rem;
+
+            font-weight:
+                800;
+
+            color:
+                #111827;
+
+        }
+
+
+        .admin-brand p {
+
+            margin: 0;
+
+            color:
+                #64748b;
+
+            font-size:
+                0.88rem;
+
+        }
+
+
+        .form-group {
+
+            margin-bottom:
+                17px;
+
+        }
+
+
+        .form-group label {
+
+            display:
+                block;
+
+            margin-bottom:
+                7px;
+
+            font-size:
+                0.86rem;
+
+            font-weight:
+                600;
+
+            color:
+                #334155;
+
+        }
+
+
+        .form-group input {
+
+            width:
+                100%;
+
+            min-height:
+                45px;
+
+            padding:
+                11px 13px;
+
+            border:
+                1px solid #cbd5e1;
+
+            border-radius:
+                9px;
+
+            outline:
+                none;
+
+            font-family:
+                inherit;
+
+            font-size:
+                0.9rem;
+
+        }
+
+
+        .form-group input:focus {
+
+            border-color:
+                #2563eb;
+
+            box-shadow:
+                0 0 0 3px
+                rgba(37, 99, 235, 0.10);
+
+        }
+
+
+        .login-button {
+
+            width:
+                100%;
+
+            min-height:
+                46px;
+
+            border:
+                none;
+
+            border-radius:
+                9px;
+
+            background:
+                #2563eb;
+
+            color:
+                #ffffff;
+
+            font-family:
+                inherit;
+
+            font-size:
+                0.92rem;
+
+            font-weight:
+                700;
+
+            cursor:
+                pointer;
+
+        }
+
+
+        .login-button:hover {
+
+            background:
+                #1d4ed8;
+
+        }
+
+
+        .forgot-password {
+
+            display:
+                block;
+
+            margin-top:
+                15px;
+
+            text-align:
+                center;
+
+            color:
+                #2563eb;
+
+            font-size:
+                0.83rem;
+
+            text-decoration:
+                none;
+
+        }
+
+
+        .login-footer {
+
+            margin-top:
+                25px;
+
+            text-align:
+                center;
+
+            color:
+                #94a3b8;
+
+            font-size:
+                0.74rem;
+
+        }
+
+
+        @media (max-width: 500px) {
+
+            .admin-login-card {
+
+                padding:
+                    24px 20px;
+
+            }
+
+
+            .admin-brand h1 {
+
+                font-size:
+                    1.45rem;
+
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<div class="admin-login-page">
+
+
+    <div class="admin-login-card">
+
+
+        <!-- =================================================
+             BRAND
+             ================================================= -->
+
+        <div class="admin-brand">
+
+            <h1>
+                Adhyayn Library
+            </h1>
+
+            <p>
+                Admin Login
+            </p>
+
+        </div>
+
+
+        <!-- =================================================
+             ADMIN LOGIN FORM
+             ================================================= -->
+
+        <form
+            id="admin-login-form"
+        >
+
+
+            <!-- LIBRARY ID -->
+
+            <div class="form-group">
+
+                <label
+                    for="admin-library-id"
+                >
+                    Library ID
+                </label>
+
+
+                <input
+                    type="text"
+                    id="admin-library-id"
+                    placeholder="Enter Library ID"
+                    autocomplete="off"
+                    required
+                >
+
+            </div>
+
+
+            <!-- ADMIN EMAIL -->
+
+            <div class="form-group">
+
+                <label
+                    for="admin-email"
+                >
+                    Admin Email
+                </label>
+
+
+                <input
+                    type="email"
+                    id="admin-email"
+                    placeholder="Enter admin email"
+                    autocomplete="email"
+                    required
+                >
+
+            </div>
+
+
+            <!-- PASSWORD -->
+
+            <div class="form-group">
+
+                <label
+                    for="admin-password"
+                >
+                    Password
+                </label>
+
+
+                <input
+                    type="password"
+                    id="admin-password"
+                    placeholder="Enter password"
+                    autocomplete="current-password"
+                    required
+                >
+
+            </div>
+
+
+            <!-- LOGIN -->
+
+            <button
+                type="submit"
+                class="login-button"
+            >
+                Admin Login
+            </button>
+
+
+            <!-- FORGOT PASSWORD -->
+
+            <a
+                href="#"
+                id="forgot-password-btn"
+                class="forgot-password"
+            >
+                Forgot Password?
+            </a>
+
+
+        </form>
+
+
+        <div class="login-footer">
+
+            Adhyayn Library Admin Portal
+
+        </div>
+
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     FIREBASE SDK
+     ========================================================= -->
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-functions.js"></script>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app-check.js"></script>
+
+
+<!-- =========================================================
+     SHARED CORE
+     ========================================================= -->
+
+<script src="js/dashboard.js"></script>
+
+
+<!-- =========================================================
+     ADMIN LOGIN INITIALIZATION
+     ========================================================= -->
+
+<script>
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+
+        /*
+         * Admin authentication pipeline
+         */
+
+        if (
+            typeof bindGatewayAuthPipelines ===
+            "function"
+        ) {
+
+            bindGatewayAuthPipelines();
+
+        }
+
+
+        /*
+         * Forgot password
+         */
+
+        const forgotButton =
+            document.getElementById(
+                "forgot-password-btn"
+            );
+
+
+        if (forgotButton) {
+
+            forgotButton.addEventListener(
+                "click",
+                async function (event) {
+
+                    event.preventDefault();
+
+
+                    const emailInput =
+                        document.getElementById(
+                            "admin-email"
+                        );
+
+
+                    const email =
+                        emailInput
+                            ? emailInput.value.trim()
+                            : "";
+
+
+                    if (!email) {
+
+                        alert(
+                            "Please enter your Admin email address first."
+                        );
+
+
+                        if (emailInput) {
+
+                            emailInput.focus();
+
+                        }
+
+
+                        return;
+
+                    }
+
+
+                    const result =
+                        await sendAdminPasswordReset(
+                            email
+                        );
+
+
+                    alert(
+                        result.message
+                    );
+
+                }
+            );
+
+        }
+
+    }
+);
+
+
+/*
+ * PWA Service Worker
+ */
+
+if (
+    "serviceWorker" in navigator
+) {
+
+    window.addEventListener(
+        "load",
+        function () {
+
+            navigator.serviceWorker
+                .register(
+                    "service-worker.js"
+                )
+                .catch(
+                    function (error) {
+
+                        console.error(
+                            "Service Worker registration failed:",
+                            error
+                        );
+
+                    }
+                );
+
+        }
+    );
+
+}
+
+</script>
+
+
+</body>
+
+</html>
