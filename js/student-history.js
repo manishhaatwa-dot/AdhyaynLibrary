@@ -1,6 +1,22 @@
 /**
  * ==========================================================================
- * ADHYAYN LIBRARY - STUDENT HISTORY
+ * ADHYAYN LIBRARY - STUDENTS HISTORY MODULE
+ * ==========================================================================
+ *
+ * Shows students whose records were removed from the active students
+ * collection.
+ *
+ * Firestore:
+ *
+ * libmanage_secure_v2
+ *   └── {LIBRARY_ID}
+ *       └── student_history
+ *
+ * IMPORTANT:
+ * - Library-wise isolation
+ * - Admin session required
+ * - Does NOT read the active students collection
+ * - Does NOT modify/delete history records
  * ==========================================================================
  */
 
@@ -8,141 +24,222 @@
 
 
 /* ==========================================================================
-   1. INITIALIZATION
-   ========================================================================== */
-
-document.addEventListener(
-    "DOMContentLoaded",
-    initializeStudentHistory
-);
-
-
-async function initializeStudentHistory() {
-
-    /*
-     * ------------------------------------------------------
-     * Admin session protection
-     * ------------------------------------------------------
-     */
-
-    const authenticated =
-        await requireAdminSession();
-
-
-    if (!authenticated) {
-
-        return;
-
-    }
-
-
-    /*
-     * ------------------------------------------------------
-     * Load shared layout
-     * ------------------------------------------------------
-     */
-
-    await Promise.all([
-
-        loadSaaSLayoutComponent(
-            "sidebar-container",
-            "../components/sidebar.html"
-        ),
-
-        loadSaaSLayoutComponent(
-            "navbar-container",
-            "../components/navbar.html"
-        ),
-
-        loadSaaSLayoutComponent(
-            "footer-container",
-            "../components/footer.html"
-        )
-
-    ]);
-
-
-    /*
-     * ------------------------------------------------------
-     * Library navigation
-     * ------------------------------------------------------
-     */
-
-    initializeLibraryNavigation();
-
-
-    /*
-     * ------------------------------------------------------
-     * Load history
-     * ------------------------------------------------------
-     */
-
-    loadStudentHistory();
-
-
-    /*
-     * ------------------------------------------------------
-     * Search
-     * ------------------------------------------------------
-     */
-
-    const searchInput =
-        document.getElementById(
-            "history-search-input"
-        );
-
-
-    if (searchInput) {
-
-        searchInput.addEventListener(
-            "input",
-            function () {
-
-                filterStudentHistory(
-                    searchInput.value
-                );
-
-            }
-        );
-
-    }
-
-}
-
-
-/* ==========================================================================
-   2. HISTORY DATA
+   1. MODULE STATE
    ========================================================================== */
 
 let studentHistoryRecords = [];
 
 
 /* ==========================================================================
-   3. HISTORY COLLECTION
+   2. DOM HELPER
    ========================================================================== */
 
-function studentHistoryRef(
-    libraryId
-) {
+function historyElement(id) {
 
-    return libraryRef(
-        libraryId
-    )
-        .collection(
-            "student_history"
-        );
+    return document.getElementById(id);
 
 }
 
 
 /* ==========================================================================
-   4. LOAD STUDENT HISTORY
+   3. HTML ESCAPE
+   ========================================================================== */
+
+function escapeHistoryHtml(value) {
+
+    return String(
+        value ?? ""
+    )
+    .replace(
+        /&/g,
+        "&amp;"
+    )
+    .replace(
+        /</g,
+        "&lt;"
+    )
+    .replace(
+        />/g,
+        "&gt;"
+    )
+    .replace(
+        /"/g,
+        "&quot;"
+    )
+    .replace(
+        /'/g,
+        "&#39;"
+    );
+
+}
+
+
+/* ==========================================================================
+   4. DATE FORMAT
+   ========================================================================== */
+
+function formatHistoryDate(value) {
+
+    if (!value) {
+
+        return "-";
+
+    }
+
+
+    let date = null;
+
+
+    if (
+        typeof value.toDate ===
+        "function"
+    ) {
+
+        date =
+            value.toDate();
+
+    }
+    else if (
+        value instanceof Date
+    ) {
+
+        date =
+            value;
+
+    }
+    else if (
+        value.seconds !==
+        undefined
+    ) {
+
+        date =
+            new Date(
+                Number(
+                    value.seconds
+                ) * 1000
+            );
+
+    }
+    else if (
+        typeof value ===
+        "string"
+    ) {
+
+        /*
+         * Existing Indian date format.
+         */
+
+        if (
+            /^\d{2}\/\d{2}\/\d{4}$/.test(
+                value
+            )
+        ) {
+
+            return value;
+
+        }
+
+
+        const parsed =
+            new Date(
+                value
+            );
+
+
+        if (
+            !Number.isNaN(
+                parsed.getTime()
+            )
+        ) {
+
+            date =
+                parsed;
+
+        }
+
+    }
+
+
+    if (
+        !date ||
+        Number.isNaN(
+            date.getTime()
+        )
+    ) {
+
+        return String(
+            value
+        );
+
+    }
+
+
+    return (
+        String(
+            date.getDate()
+        ).padStart(
+            2,
+            "0"
+        ) +
+        "/" +
+        String(
+            date.getMonth() + 1
+        ).padStart(
+            2,
+            "0"
+        ) +
+        "/" +
+        date.getFullYear()
+    );
+
+}
+
+
+/* ==========================================================================
+   5. GET ADMIN SESSION
+   ========================================================================== */
+
+function getHistoryLibraryContext() {
+
+    if (
+        typeof getCurrentSession !==
+        "function"
+    ) {
+
+        return null;
+
+    }
+
+
+    const session =
+        getCurrentSession();
+
+
+    if (
+        !session ||
+        session.role !==
+        "admin" ||
+        !session.libraryId
+    ) {
+
+        return null;
+
+    }
+
+
+    return session;
+
+}
+
+
+/* ==========================================================================
+   6. LOAD STUDENT HISTORY
    ========================================================================== */
 
 async function loadStudentHistory() {
 
     const tableBody =
-        document.getElementById(
+        historyElement(
             "student-history-rows"
         );
 
@@ -155,26 +252,21 @@ async function loadStudentHistory() {
 
 
     const session =
-        getCurrentSession();
+        getHistoryLibraryContext();
 
 
-    const libraryId =
-        normalizeLibraryId(
-            session.libraryId
-        );
-
-
-    if (!libraryId) {
+    if (!session) {
 
         tableBody.innerHTML = `
 
             <tr>
 
                 <td
-                    colspan="9"
+                    colspan="10"
                     class="history-empty"
                 >
-                    Library session not found.
+                    Session expired. Please login again.
+
                 </td>
 
             </tr>
@@ -186,17 +278,20 @@ async function loadStudentHistory() {
     }
 
 
-    if (!window.db) {
+    if (
+        !window.db
+    ) {
 
         tableBody.innerHTML = `
 
             <tr>
 
                 <td
-                    colspan="9"
+                    colspan="10"
                     class="history-empty"
                 >
-                    Database is unavailable.
+                    Database is not available.
+
                 </td>
 
             </tr>
@@ -206,30 +301,57 @@ async function loadStudentHistory() {
         return;
 
     }
+
+
+    tableBody.innerHTML = `
+
+        <tr>
+
+            <td
+                colspan="10"
+                class="history-empty"
+            >
+                Loading student history...
+
+            </td>
+
+        </tr>
+
+    `;
 
 
     try {
 
-        const snapshot =
-            await studentHistoryRef(
-                libraryId
-            )
-            .get();
+        /*
+         * ==========================================================
+         * LIBRARY-WISE HISTORY COLLECTION
+         * ==========================================================
+         */
+
+        const historySnapshot =
+            await window.db
+                .collection(
+                    "libmanage_secure_v2"
+                )
+                .doc(
+                    session.libraryId
+                )
+                .collection(
+                    "student_history"
+                )
+                .get();
 
 
         studentHistoryRecords =
-            snapshot.docs.map(
-                function (doc) {
+            historySnapshot.docs.map(
+                (doc) => {
 
                     return {
 
-                        id:
+                        firestoreId:
                             doc.id,
 
-                        ...(
-                            doc.data() ||
-                            {}
-                        )
+                        ...doc.data()
 
                     };
 
@@ -238,39 +360,44 @@ async function loadStudentHistory() {
 
 
         /*
-         * Newest history first.
+         * Newest deleted student first.
          */
 
         studentHistoryRecords.sort(
-            function (a, b) {
+            (a, b) => {
+
+                const aTime =
+                    a.deletedAt &&
+                    typeof a.deletedAt.toMillis ===
+                    "function"
+                        ? a.deletedAt.toMillis()
+                        : 0;
+
+
+                const bTime =
+                    b.deletedAt &&
+                    typeof b.deletedAt.toMillis ===
+                    "function"
+                        ? b.deletedAt.toMillis()
+                        : 0;
+
 
                 return (
-                    getTimestamp(
-                        b.historyAt ||
-                        b.createdAt ||
-                        b.updatedAt
-                    )
-                    -
-                    getTimestamp(
-                        a.historyAt ||
-                        a.createdAt ||
-                        a.updatedAt
-                    )
+                    bTime -
+                    aTime
                 );
 
             }
         );
 
 
-        renderStudentHistory(
-            studentHistoryRecords
-        );
+        renderStudentHistory();
 
     }
     catch (error) {
 
         console.error(
-            "[Adhyayn Library] Student history load error:",
+            "[Students History] Load error:",
             error
         );
 
@@ -280,10 +407,11 @@ async function loadStudentHistory() {
             <tr>
 
                 <td
-                    colspan="9"
+                    colspan="10"
                     class="history-empty"
                 >
                     Unable to load student history.
+
                 </td>
 
             </tr>
@@ -296,15 +424,13 @@ async function loadStudentHistory() {
 
 
 /* ==========================================================================
-   5. RENDER HISTORY
+   7. RENDER HISTORY TABLE
    ========================================================================== */
 
-function renderStudentHistory(
-    records
-) {
+function renderStudentHistory() {
 
     const tableBody =
-        document.getElementById(
+        historyElement(
             "student-history-rows"
         );
 
@@ -316,17 +442,91 @@ function renderStudentHistory(
     }
 
 
-    if (!records.length) {
+    const searchInput =
+        historyElement(
+            "history-search-input"
+        );
+
+
+    const searchValue =
+        String(
+            searchInput?.value ||
+            ""
+        )
+        .trim()
+        .toLowerCase();
+
+
+    const filteredRecords =
+        studentHistoryRecords.filter(
+            (student) => {
+
+                if (!searchValue) {
+
+                    return true;
+
+                }
+
+
+                const searchableText = [
+
+                    student.studentCode,
+
+                    student.studentName,
+
+                    student.fatherName,
+
+                    student.email,
+
+                    student.className,
+
+                    student.seatNumber,
+
+                    student.mobileNumber,
+
+                    student.shift,
+
+                    student.status,
+
+                    student.joiningDate,
+
+                    student.expiryDate,
+
+                    student.feeDueDate,
+
+                    student.feeStatus
+
+                ]
+                .join(" ")
+                .toLowerCase();
+
+
+                return searchableText.includes(
+                    searchValue
+                );
+
+            }
+        );
+
+
+    if (
+        !filteredRecords.length
+    ) {
 
         tableBody.innerHTML = `
 
             <tr>
 
                 <td
-                    colspan="9"
+                    colspan="10"
                     class="history-empty"
                 >
-                    No student history available.
+                    ${
+                        searchValue
+                            ? "No matching student history found."
+                            : "No student history available."
+                    }
+
                 </td>
 
             </tr>
@@ -338,377 +538,699 @@ function renderStudentHistory(
     }
 
 
-    tableBody.innerHTML =
-        records
-            .map(
-                function (student) {
-
-                    const status =
-                        String(
-                            student.status ||
-                            "Expired"
-                        );
+    let html =
+        "";
 
 
-                    const statusClass =
-                        status
-                            .toLowerCase()
-                            .includes(
-                                "active"
+    filteredRecords.forEach(
+        (student) => {
+
+            html += `
+
+                <tr>
+
+                    <td>
+
+                        <span class="history-code">
+
+                            ${escapeHistoryHtml(
+                                student.studentCode ||
+                                "-"
+                            )}
+
+                        </span>
+
+                    </td>
+
+
+                    <td>
+
+                        <span class="history-name">
+
+                            ${escapeHistoryHtml(
+                                student.studentName ||
+                                "-"
+                            )}
+
+                        </span>
+
+                    </td>
+
+
+                    <td>
+
+                        ${escapeHistoryHtml(
+                            student.fatherName ||
+                            "-"
+                        )}
+
+                    </td>
+
+
+                    <td>
+
+                        ${escapeHistoryHtml(
+                            student.seatNumber ||
+                            "-"
+                        )}
+
+                    </td>
+
+
+                    <td>
+
+                        ${escapeHistoryHtml(
+                            student.className ||
+                            "-"
+                        )}
+
+                    </td>
+
+
+                    <td>
+
+                        ${escapeHistoryHtml(
+                            formatHistoryDate(
+                                student.joiningDate
                             )
-                            ? "active"
-                            : "expired";
+                        )}
+
+                    </td>
 
 
-                    return `
+                    <td>
 
-                        <tr>
+                        ${escapeHistoryHtml(
+                            formatHistoryDate(
+                                student.expiryDate
+                            )
+                        )}
 
-                            <td>
-                                ${escapeHistoryHtml(
-                                    student.studentCode ||
-                                    student.code ||
-                                    student.id ||
-                                    "—"
-                                )}
-                            </td>
+                    </td>
 
 
-                            <td>
-                                ${escapeHistoryHtml(
-                                    student.name ||
-                                    student.studentName ||
-                                    "—"
-                                )}
-                            </td>
+                    <td>
+
+                        ${escapeHistoryHtml(
+                            formatHistoryDate(
+                                student.deletedAt
+                            )
+                        )}
+
+                    </td>
 
 
-                            <td>
-                                ${escapeHistoryHtml(
-                                    student.fatherName ||
-                                    student.father ||
-                                    "—"
-                                )}
-                            </td>
+                    <td>
+
+                        <span class="history-status">
+
+                            ${escapeHistoryHtml(
+                                student.status ||
+                                "Deleted"
+                            )}
+
+                        </span>
+
+                    </td>
 
 
-                            <td>
-                                ${escapeHistoryHtml(
-                                    student.seatNumber ||
-                                    student.seat ||
-                                    "—"
-                                )}
-                            </td>
+                    <td>
+
+                        <button
+                            type="button"
+                            class="history-view-btn"
+                            data-history-view="${escapeHistoryHtml(
+                                student.firestoreId ||
+                                student.studentCode ||
+                                ""
+                            )}"
+                        >
+                            View
+
+                        </button>
+
+                    </td>
+
+                </tr>
+
+            `;
+
+        }
+    );
 
 
-                            <td>
-                                ${escapeHistoryHtml(
-                                    student.class ||
-                                    student.className ||
-                                    "—"
-                                )}
-                            </td>
-
-
-                            <td>
-                                ${escapeHistoryHtml(
-                                    student.joiningDate ||
-                                    "—"
-                                )}
-                            </td>
-
-
-                            <td>
-                                ${escapeHistoryHtml(
-                                    student.expiryDate ||
-                                    "—"
-                                )}
-                            </td>
-
-
-                            <td>
-
-                                <span
-                                    class="history-status ${statusClass}"
-                                >
-                                    ${escapeHistoryHtml(
-                                        status
-                                    )}
-                                </span>
-
-                            </td>
-
-
-                            <td>
-                                ${escapeHistoryHtml(
-                                    formatHistoryDate(
-                                        student.historyAt ||
-                                        student.createdAt ||
-                                        student.updatedAt
-                                    )
-                                )}
-                            </td>
-
-                        </tr>
-
-                    `;
-
-                }
-            )
-            .join("");
+    tableBody.innerHTML =
+        html;
 
 }
 
 
 /* ==========================================================================
-   6. SEARCH FILTER
+   8. SHOW STUDENT DETAILS
    ========================================================================== */
 
-function filterStudentHistory(
-    searchValue
+function showStudentHistoryDetails(
+    recordId
 ) {
 
-    const search =
-        String(
-            searchValue ||
-            ""
-        )
-        .trim()
-        .toLowerCase();
+    const student =
+        studentHistoryRecords.find(
+            (item) => {
 
+                return (
+                    String(
+                        item.firestoreId
+                    ) ===
+                    String(
+                        recordId
+                    )
+                );
 
-    if (!search) {
-
-        renderStudentHistory(
-            studentHistoryRecords
+            }
         );
+
+
+    if (!student) {
 
         return;
 
     }
 
 
-    const filtered =
-        studentHistoryRecords.filter(
-            function (student) {
-
-                const searchableText = [
-
-                    student.studentCode,
-
-                    student.code,
-
-                    student.name,
-
-                    student.studentName,
-
-                    student.fatherName,
-
-                    student.father,
-
-                    student.seatNumber,
-
-                    student.seat,
-
-                    student.class,
-
-                    student.className,
-
-                    student.mobile,
-
-                    student.mobileNumber,
-
-                    student.status
-
-                ]
-                .filter(
-                    function (value) {
-
-                        return value !==
-                            undefined &&
-                            value !==
-                            null;
-
-                    }
-                )
-                .join(" ")
-                .toLowerCase();
-
-
-                return searchableText
-                    .includes(
-                        search
-                    );
-
-            }
+    const modal =
+        historyElement(
+            "history-details-modal"
         );
 
 
-    renderStudentHistory(
-        filtered
+    const content =
+        historyElement(
+            "history-details-content"
+        );
+
+
+    if (
+        !modal ||
+        !content
+    ) {
+
+        return;
+
+    }
+
+
+    content.innerHTML = `
+
+        <div class="history-detail">
+
+            <span>
+                Student Login Code
+            </span>
+
+            <strong>
+                ${escapeHistoryHtml(
+                    student.studentCode ||
+                    "-"
+                )}
+            </strong>
+
+        </div>
+
+
+        <div class="history-detail">
+
+            <span>
+                Student Name
+            </span>
+
+            <strong>
+                ${escapeHistoryHtml(
+                    student.studentName ||
+                    "-"
+                )}
+            </strong>
+
+        </div>
+
+
+        <div class="history-detail">
+
+            <span>
+                Father's Name
+            </span>
+
+            <strong>
+                ${escapeHistoryHtml(
+                    student.fatherName ||
+                    "-"
+                )}
+            </strong>
+
+        </div>
+
+
+        <div class="history-detail">
+
+            <span>
+                Email
+            </span>
+
+            <strong>
+                ${escapeHistoryHtml(
+                    student.email ||
+                    "-"
+                )}
+            </strong>
+
+        </div>
+
+
+        <div class="history-detail">
+
+            <span>
+                Class
+            </span>
+
+            <strong>
+                ${escapeHistoryHtml(
+                    student.className ||
+                    "-"
+                )}
+            </strong>
+
+        </div>
+
+
+        <div class="history-detail">
+
+            <span>
+                Seat Number
+            </span>
+
+            <strong>
+                ${escapeHistoryHtml(
+                    student.seatNumber ||
+                    "-"
+                )}
+            </strong>
+
+        </div>
+
+
+        <div class="history-detail">
+
+            <span>
+                Mobile Number
+            </span>
+
+            <strong>
+                ${escapeHistoryHtml(
+                    student.mobileNumber ||
+                    "-"
+                )}
+            </strong>
+
+        </div>
+
+
+        <div class="history-detail">
+
+            <span>
+                Shift
+            </span>
+
+            <strong>
+                ${escapeHistoryHtml(
+                    student.shift ||
+                    "-"
+                )}
+            </strong>
+
+        </div>
+
+
+        <div class="history-detail">
+
+            <span>
+                Joining Date
+            </span>
+
+            <strong>
+                ${escapeHistoryHtml(
+                    formatHistoryDate(
+                        student.joiningDate
+                    )
+                )}
+            </strong>
+
+        </div>
+
+
+        <div class="history-detail">
+
+            <span>
+                Expiry Date
+            </span>
+
+            <strong>
+                ${escapeHistoryHtml(
+                    formatHistoryDate(
+                        student.expiryDate
+                    )
+                )}
+            </strong>
+
+        </div>
+
+
+        <div class="history-detail">
+
+            <span>
+                Fee Due Date
+            </span>
+
+            <strong>
+                ${escapeHistoryHtml(
+                    formatHistoryDate(
+                        student.feeDueDate
+                    )
+                )}
+            </strong>
+
+        </div>
+
+
+        <div class="history-detail">
+
+            <span>
+                Fee Status
+            </span>
+
+            <strong>
+                ${escapeHistoryHtml(
+                    student.feeStatus ||
+                    "Paid"
+                )}
+            </strong>
+
+        </div>
+
+
+        <div class="history-detail">
+
+            <span>
+                Deleted Date
+            </span>
+
+            <strong>
+                ${escapeHistoryHtml(
+                    formatHistoryDate(
+                        student.deletedAt
+                    )
+                )}
+            </strong>
+
+        </div>
+
+
+        <div class="history-detail">
+
+            <span>
+                Deleted By
+            </span>
+
+            <strong>
+                ${escapeHistoryHtml(
+                    student.deletedBy ||
+                    "-"
+                )}
+            </strong>
+
+        </div>
+
+    `;
+
+
+    modal.classList.add(
+        "active"
+    );
+
+
+    modal.setAttribute(
+        "aria-hidden",
+        "false"
     );
 
 }
 
 
 /* ==========================================================================
-   7. TIMESTAMP HELPER
+   9. CLOSE DETAILS MODAL
    ========================================================================== */
 
-function getTimestamp(
-    value
-) {
+function closeStudentHistoryModal() {
 
-    if (!value) {
-
-        return 0;
-
-    }
-
-
-    if (
-        typeof value.toMillis ===
-        "function"
-    ) {
-
-        return value.toMillis();
-
-    }
-
-
-    if (
-        typeof value.toDate ===
-        "function"
-    ) {
-
-        return value.toDate().getTime();
-
-    }
-
-
-    if (
-        value.seconds !==
-        undefined
-    ) {
-
-        return Number(
-            value.seconds
-        ) * 1000;
-
-    }
-
-
-    const date =
-        new Date(
-            value
+    const modal =
+        historyElement(
+            "history-details-modal"
         );
 
 
-    if (
-        Number.isNaN(
-            date.getTime()
-        )
-    ) {
+    if (!modal) {
 
-        return 0;
+        return;
 
     }
 
 
-    return date.getTime();
+    modal.classList.remove(
+        "active"
+    );
+
+
+    modal.setAttribute(
+        "aria-hidden",
+        "true"
+    );
 
 }
 
 
 /* ==========================================================================
-   8. DATE FORMAT
+   10. SEARCH
    ========================================================================== */
 
-function formatHistoryDate(
-    value
-) {
+function bindStudentHistorySearch() {
 
-    const timestamp =
-        getTimestamp(
-            value
+    const searchInput =
+        historyElement(
+            "history-search-input"
         );
 
 
-    if (!timestamp) {
+    if (!searchInput) {
 
-        return "—";
+        return;
 
     }
 
 
-    return new Date(
-        timestamp
-    )
-        .toLocaleString(
-            "en-IN",
-            {
-                day:
-                    "2-digit",
+    searchInput.addEventListener(
+        "input",
+        () => {
 
-                month:
-                    "short",
+            renderStudentHistory();
 
-                year:
-                    "numeric",
+        }
+    );
 
-                hour:
-                    "2-digit",
+}
 
-                minute:
-                    "2-digit"
+
+/* ==========================================================================
+   11. VIEW BUTTONS
+   ========================================================================== */
+
+function bindStudentHistoryActions() {
+
+    const tableBody =
+        historyElement(
+            "student-history-rows"
+        );
+
+
+    if (!tableBody) {
+
+        return;
+
+    }
+
+
+    tableBody.addEventListener(
+        "click",
+        (event) => {
+
+            const viewButton =
+                event.target.closest(
+                    "[data-history-view]"
+                );
+
+
+            if (!viewButton) {
+
+                return;
+
+            }
+
+
+            showStudentHistoryDetails(
+                viewButton.getAttribute(
+                    "data-history-view"
+                )
+            );
+
+        }
+    );
+
+}
+
+
+/* ==========================================================================
+   12. MODAL EVENTS
+   ========================================================================== */
+
+function bindStudentHistoryModal() {
+
+    const modal =
+        historyElement(
+            "history-details-modal"
+        );
+
+
+    const closeButton =
+        historyElement(
+            "history-close-modal"
+        );
+
+
+    if (closeButton) {
+
+        closeButton.addEventListener(
+            "click",
+            closeStudentHistoryModal
+        );
+
+    }
+
+
+    if (modal) {
+
+        modal.addEventListener(
+            "click",
+            (event) => {
+
+                if (
+                    event.target ===
+                    modal
+                ) {
+
+                    closeStudentHistoryModal();
+
+                }
+
             }
         );
 
-}
+    }
 
 
-/* ==========================================================================
-   9. HTML ESCAPE
-   ========================================================================== */
+    document.addEventListener(
+        "keydown",
+        (event) => {
 
-function escapeHistoryHtml(
-    value
-) {
+            if (
+                event.key ===
+                    "Escape" &&
+                modal &&
+                modal.classList.contains(
+                    "active"
+                )
+            ) {
 
-    return String(
-        value ??
-        ""
-    )
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-        .replace(
-            /</g,
-            "&lt;"
-        )
-        .replace(
-            />/g,
-            "&gt;"
-        )
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-        .replace(
-            /'/g,
-            "&#39;"
-        );
+                closeStudentHistoryModal();
+
+            }
+
+        }
+    );
 
 }
 
 
 /* ==========================================================================
-   10. GLOBAL
+   13. INITIALIZATION
    ========================================================================== */
 
-window.studentHistoryRef =
-    studentHistoryRef;
+document.addEventListener(
+    "DOMContentLoaded",
+    async () => {
 
-window.loadStudentHistory =
-    loadStudentHistory;
+        if (
+            !historyElement(
+                "student-history-rows"
+            )
+        ) {
+
+            return;
+
+        }
+
+
+        if (
+            typeof requireAdminSession ===
+            "function"
+        ) {
+
+            const authenticated =
+                await requireAdminSession();
+
+
+            if (!authenticated) {
+
+                return;
+
+            }
+
+        }
+
+
+        bindStudentHistorySearch();
+
+        bindStudentHistoryActions();
+
+        bindStudentHistoryModal();
+
+        await loadStudentHistory();
+
+    }
+);
+
+
+/* ==========================================================================
+   14. GLOBAL API
+   ========================================================================== */
+
+window.LibManageStudentHistory = {
+
+    reload:
+        loadStudentHistory,
+
+    render:
+        renderStudentHistory
+
+};
+
+
+console.log(
+    "[Adhyayn Library] Students History module loaded successfully."
+);
