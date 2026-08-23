@@ -10,15 +10,12 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <meta
-        name="theme-color"
-        content="#2563eb"
-    >
-
-    <title>Student History - Adhyayn Library</title>
+    <title>Students History - Adhyayn Library</title>
 
 
-    <!-- GOOGLE FONT -->
+    <!-- =====================================================
+         GOOGLE FONT
+         ===================================================== -->
 
     <link
         rel="preconnect"
@@ -27,7 +24,7 @@
 
     <link
         rel="preconnect"
-        href="https://fonts.googleapis.com"
+        href="https://fonts.gstatic.com"
         crossorigin
     >
 
@@ -37,7 +34,9 @@
     >
 
 
-    <!-- GLOBAL CSS -->
+    <!-- =====================================================
+         GLOBAL CSS
+         ===================================================== -->
 
     <link
         rel="stylesheet"
@@ -45,60 +44,55 @@
     >
 
 
-    <!-- STUDENT HISTORY CSS -->
-
     <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+
+        body {
+            margin: 0;
+            font-family: Inter, sans-serif;
+        }
+
 
         .history-header {
 
             display: flex;
 
-            justify-content: space-between;
-
             align-items: center;
 
-            gap: 1rem;
+            justify-content: space-between;
 
-            margin-bottom: 1.5rem;
+            gap: 20px;
 
-        }
-
-
-        .history-title h1 {
-
-            margin: 0 0 0.35rem;
-
-            font-size: 1.6rem;
-
-            color: var(--text-main);
+            margin-bottom: 22px;
 
         }
 
 
-        .history-title p {
+        .history-header h1 {
+
+            margin: 0 0 6px;
+
+        }
+
+
+        .history-header p {
 
             margin: 0;
 
-            color: var(--text-muted);
+            color: #64748b;
 
-            font-size: 0.9rem;
+            font-size: 0.88rem;
 
         }
 
 
         .history-search-panel {
 
-            padding: 1rem;
-
-            margin-bottom: 1.5rem;
-
-            background: #ffffff;
-
-            border: 1px solid #e5e7eb;
-
-            border-radius: var(--radius-md);
-
-            box-shadow: var(--shadow-sm);
+            margin-bottom: 18px;
 
         }
 
@@ -107,60 +101,42 @@
 
             width: 100%;
 
-            max-width: 500px;
+            min-height: 45px;
 
-            min-height: 44px;
-
-            padding: 0.7rem 0.9rem;
+            padding: 11px 14px;
 
             border: 1px solid #cbd5e1;
 
-            border-radius: var(--radius-sm);
+            border-radius: 9px;
 
             outline: none;
 
-            font-family: inherit;
-
-            font-size: 0.9rem;
+            font: inherit;
 
         }
 
 
         .history-search:focus {
 
-            border-color: var(--primary-color);
+            border-color: #2563eb;
 
             box-shadow:
                 0 0 0 3px
-                rgba(37, 99, 235, 0.12);
+                rgba(37, 99, 235, 0.10);
 
         }
 
 
-        .history-card {
-
-            padding: 1rem;
-
-            background: #ffffff;
-
-            border: 1px solid #edf2f7;
-
-            border-radius: var(--radius-md);
-
-            box-shadow: var(--shadow-md);
+        .history-table-card {
 
             overflow: hidden;
 
         }
 
 
-        .history-scroll {
-
-            width: 100%;
+        .history-table-scroll {
 
             overflow-x: auto;
-
-            -webkit-overflow-scrolling: touch;
 
         }
 
@@ -169,61 +145,64 @@
 
             width: 100%;
 
-            min-width: 850px;
+            min-width: 1000px;
 
             border-collapse: collapse;
-
-            text-align: left;
-
-            font-size: 0.85rem;
 
         }
 
 
-        .history-table th {
+        .history-table th,
+        .history-table td {
 
-            padding: 1rem 0.75rem;
+            padding: 13px 14px;
 
-            background: #f8fafc;
+            text-align: left;
 
-            color: #475569;
-
-            font-weight: 700;
-
-            border-bottom: 2px solid #e2e8f0;
+            border-bottom:
+                1px solid #e5e7eb;
 
             white-space: nowrap;
 
         }
 
 
-        .history-table td {
-
-            padding: 0.9rem 0.75rem;
-
-            border-bottom: 1px solid #f1f5f9;
-
-            color: var(--text-main);
-
-            vertical-align: middle;
-
-        }
-
-
-        .history-table tbody tr:hover {
+        .history-table th {
 
             background: #f8fafc;
 
+            color: #475569;
+
+            font-size: 0.78rem;
+
+            font-weight: 700;
+
         }
 
 
-        .history-empty {
+        .history-table td {
 
-            text-align: center;
+            color: #334155;
 
-            color: #94a3b8;
+            font-size: 0.84rem;
 
-            padding: 2rem !important;
+        }
+
+
+        .history-code {
+
+            font-weight: 800;
+
+            color: #2563eb;
+
+        }
+
+
+        .history-name {
+
+            font-weight: 700;
+
+            color: #111827;
 
         }
 
@@ -232,9 +211,13 @@
 
             display: inline-block;
 
-            padding: 0.2rem 0.55rem;
+            padding: 5px 9px;
 
-            border-radius: 5px;
+            border-radius: 999px;
+
+            background: #f1f5f9;
+
+            color: #475569;
 
             font-size: 0.72rem;
 
@@ -243,45 +226,222 @@
         }
 
 
-        .history-status.active {
+        .history-empty {
 
-            background: #ecfdf5;
+            text-align: center;
 
-            color: #059669;
+            padding: 40px 20px;
 
-        }
-
-
-        .history-status.expired {
-
-            background: #fef2f2;
-
-            color: #dc2626;
+            color: #64748b;
 
         }
 
 
-        @media (max-width: 700px) {
+        .history-view-btn {
+
+            border: none;
+
+            border-radius: 7px;
+
+            padding: 7px 11px;
+
+            background: #eff6ff;
+
+            color: #2563eb;
+
+            font: inherit;
+
+            font-size: 0.76rem;
+
+            font-weight: 700;
+
+            cursor: pointer;
+
+        }
+
+
+        .history-view-btn:hover {
+
+            background: #dbeafe;
+
+        }
+
+
+        .history-back-btn {
+
+            border: none;
+
+            border-radius: 8px;
+
+            padding: 10px 14px;
+
+            background: #f1f5f9;
+
+            color: #334155;
+
+            font: inherit;
+
+            font-weight: 700;
+
+            cursor: pointer;
+
+        }
+
+
+        .history-modal {
+
+            position: fixed;
+
+            inset: 0;
+
+            z-index: 9999;
+
+            display: none;
+
+            align-items: center;
+
+            justify-content: center;
+
+            padding: 20px;
+
+            background:
+                rgba(15, 23, 42, 0.55);
+
+        }
+
+
+        .history-modal.active {
+
+            display: flex;
+
+        }
+
+
+        .history-modal-box {
+
+            width: 100%;
+
+            max-width: 560px;
+
+            max-height: 90vh;
+
+            overflow-y: auto;
+
+            background: #ffffff;
+
+            border-radius: 16px;
+
+            padding: 24px;
+
+            box-shadow:
+                0 20px 60px
+                rgba(0, 0, 0, 0.20);
+
+        }
+
+
+        .history-modal-header {
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            gap: 15px;
+
+            margin-bottom: 20px;
+
+        }
+
+
+        .history-modal-header h2 {
+
+            margin: 0;
+
+            font-size: 1.2rem;
+
+        }
+
+
+        .history-close {
+
+            border: none;
+
+            background: transparent;
+
+            font-size: 25px;
+
+            cursor: pointer;
+
+            color: #64748b;
+
+        }
+
+
+        .history-details {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
+
+            gap: 12px;
+
+        }
+
+
+        .history-detail {
+
+            padding: 12px;
+
+            border-radius: 9px;
+
+            background: #f8fafc;
+
+        }
+
+
+        .history-detail span {
+
+            display: block;
+
+            margin-bottom: 4px;
+
+            color: #64748b;
+
+            font-size: 0.72rem;
+
+        }
+
+
+        .history-detail strong {
+
+            display: block;
+
+            color: #111827;
+
+            font-size: 0.84rem;
+
+            word-break: break-word;
+
+        }
+
+
+        @media (max-width: 650px) {
 
             .history-header {
 
-                flex-direction: column;
-
                 align-items: flex-start;
 
-            }
-
-
-            .history-search {
-
-                max-width: 100%;
+                flex-direction: column;
 
             }
 
 
-            .history-card {
+            .history-details {
 
-                padding: 0.75rem;
+                grid-template-columns: 1fr;
 
             }
 
@@ -298,7 +458,9 @@
 <div class="app-container">
 
 
-    <!-- SIDEBAR -->
+    <!-- =====================================================
+         SIDEBAR
+         ===================================================== -->
 
     <div
         id="sidebar-container"
@@ -308,56 +470,81 @@
     <div class="main-content">
 
 
-        <!-- NAVBAR -->
+        <!-- =================================================
+             NAVBAR
+             ================================================= -->
 
         <div
             id="navbar-container"
         ></div>
 
 
+        <!-- =================================================
+             MAIN CONTENT
+             ================================================= -->
+
         <main class="content-body">
 
 
-            <!-- HEADER -->
+            <!-- =================================================
+                 HEADER
+                 ================================================= -->
 
             <div class="history-header">
 
-                <div class="history-title">
+                <div>
 
                     <h1>
                         Students History
                     </h1>
 
                     <p>
-                        View previous and current student records
-                        for this library.
+                        View records of students who have
+                        left the library or were removed.
                     </p>
 
                 </div>
 
+
+                <button
+                    type="button"
+                    class="history-back-btn"
+                    onclick="window.location.href='admin-dashboard.html'"
+                >
+                    Back to Dashboard
+                </button>
+
             </div>
 
 
-            <!-- SEARCH -->
+            <!-- =================================================
+                 SEARCH
+                 ================================================= -->
 
-            <div class="history-search-panel">
+            <div
+                class="panel-card history-search-panel"
+            >
 
                 <input
                     type="text"
                     id="history-search-input"
                     class="history-search"
-                    placeholder="Search by student name, code, seat or mobile..."
+                    placeholder="Search by Student Name, Login Code, Seat, Class or Mobile..."
                     autocomplete="off"
                 >
 
             </div>
 
 
-            <!-- TABLE -->
+            <!-- =================================================
+                 HISTORY TABLE
+                 ================================================= -->
 
-            <div class="history-card">
+            <div
+                class="panel-card history-table-card"
+            >
 
-                <div class="history-scroll">
+                <div class="history-table-scroll">
 
                     <table class="history-table">
 
@@ -366,7 +553,7 @@
                             <tr>
 
                                 <th>
-                                    Student Code
+                                    Login Code
                                 </th>
 
                                 <th>
@@ -378,7 +565,7 @@
                                 </th>
 
                                 <th>
-                                    Seat No
+                                    Seat
                                 </th>
 
                                 <th>
@@ -394,11 +581,15 @@
                                 </th>
 
                                 <th>
+                                    Deleted Date
+                                </th>
+
+                                <th>
                                     Status
                                 </th>
 
                                 <th>
-                                    History Date
+                                    Details
                                 </th>
 
                             </tr>
@@ -413,7 +604,7 @@
                             <tr>
 
                                 <td
-                                    colspan="9"
+                                    colspan="10"
                                     class="history-empty"
                                 >
                                     Loading student history...
@@ -433,7 +624,9 @@
         </main>
 
 
-        <!-- FOOTER -->
+        <!-- =================================================
+             FOOTER
+             ================================================= -->
 
         <div
             id="footer-container"
@@ -445,7 +638,49 @@
 </div>
 
 
-<!-- FIREBASE -->
+<!-- =========================================================
+     DETAILS MODAL
+     ========================================================= -->
+
+<div
+    id="history-details-modal"
+    class="history-modal"
+    aria-hidden="true"
+>
+
+    <div class="history-modal-box">
+
+        <div class="history-modal-header">
+
+            <h2>
+                Student History Details
+            </h2>
+
+
+            <button
+                type="button"
+                id="history-close-modal"
+                class="history-close"
+            >
+                ×
+            </button>
+
+        </div>
+
+
+        <div
+            id="history-details-content"
+            class="history-details"
+        ></div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     FIREBASE SDK
+     ========================================================= -->
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 
@@ -454,14 +689,18 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
 
-<!-- SHARED CORE -->
+<!-- =========================================================
+     SHARED CORE
+     ========================================================= -->
 
 <script src="../js/dashboard.js"></script>
 
 
-<!-- STUDENT HISTORY -->
+<!-- =========================================================
+     STUDENT HISTORY LOGIC
+     ========================================================= -->
 
-<script src="../js/student-history.js"></script>
+<script src="../js/students-history.js"></script>
 
 
 </body>
