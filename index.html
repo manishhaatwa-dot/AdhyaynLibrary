@@ -10,33 +10,12 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <meta
-        name="theme-color"
-        content="#2563eb"
-    >
-
-    <meta
-        name="mobile-web-app-capable"
-        content="yes"
-    >
-
-    <meta
-        name="apple-mobile-web-app-capable"
-        content="yes"
-    >
-
-    <title>Adhyayn Library - Admin Login</title>
+    <title>Adhyayn Library</title>
 
 
-    <!-- PWA -->
-
-    <link
-        rel="manifest"
-        href="manifest.json"
-    >
-
-
-    <!-- GOOGLE FONT -->
+    <!-- =====================================================
+         GOOGLE FONTS
+         ===================================================== -->
 
     <link
         rel="preconnect"
@@ -55,7 +34,9 @@
     >
 
 
-    <!-- GLOBAL CSS -->
+    <!-- =====================================================
+         GLOBAL CSS
+         ===================================================== -->
 
     <link
         rel="stylesheet"
@@ -63,273 +44,14 @@
     >
 
 
-    <style>
-
-        * {
-            box-sizing: border-box;
-        }
-
-
-        body {
-            margin: 0;
-
-            min-height: 100vh;
-
-            font-family: Inter, sans-serif;
-
-            background:
-                #f8fafc;
-        }
-
-
-        .admin-login-page {
-
-            min-height: 100vh;
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: center;
-
-            padding: 20px;
-
-        }
-
-
-        .admin-login-card {
-
-            width: 100%;
-
-            max-width: 430px;
-
-            background: #ffffff;
-
-            border:
-                1px solid #e5e7eb;
-
-            border-radius: 18px;
-
-            padding: 32px;
-
-            box-shadow:
-                0 20px 50px
-                rgba(15, 23, 42, 0.10);
-
-        }
-
-
-        .admin-brand {
-
-            text-align: center;
-
-            margin-bottom: 28px;
-
-        }
-
-
-        .admin-brand h1 {
-
-            margin:
-                0 0 7px;
-
-            font-size:
-                1.7rem;
-
-            font-weight:
-                800;
-
-            color:
-                #111827;
-
-        }
-
-
-        .admin-brand p {
-
-            margin: 0;
-
-            color:
-                #64748b;
-
-            font-size:
-                0.88rem;
-
-        }
-
-
-        .form-group {
-
-            margin-bottom:
-                17px;
-
-        }
-
-
-        .form-group label {
-
-            display:
-                block;
-
-            margin-bottom:
-                7px;
-
-            font-size:
-                0.86rem;
-
-            font-weight:
-                600;
-
-            color:
-                #334155;
-
-        }
-
-
-        .form-group input {
-
-            width:
-                100%;
-
-            min-height:
-                45px;
-
-            padding:
-                11px 13px;
-
-            border:
-                1px solid #cbd5e1;
-
-            border-radius:
-                9px;
-
-            outline:
-                none;
-
-            font-family:
-                inherit;
-
-            font-size:
-                0.9rem;
-
-        }
-
-
-        .form-group input:focus {
-
-            border-color:
-                #2563eb;
-
-            box-shadow:
-                0 0 0 3px
-                rgba(37, 99, 235, 0.10);
-
-        }
-
-
-        .login-button {
-
-            width:
-                100%;
-
-            min-height:
-                46px;
-
-            border:
-                none;
-
-            border-radius:
-                9px;
-
-            background:
-                #2563eb;
-
-            color:
-                #ffffff;
-
-            font-family:
-                inherit;
-
-            font-size:
-                0.92rem;
-
-            font-weight:
-                700;
-
-            cursor:
-                pointer;
-
-        }
-
-
-        .login-button:hover {
-
-            background:
-                #1d4ed8;
-
-        }
-
-
-        .forgot-password {
-
-            display:
-                block;
-
-            margin-top:
-                15px;
-
-            text-align:
-                center;
-
-            color:
-                #2563eb;
-
-            font-size:
-                0.83rem;
-
-            text-decoration:
-                none;
-
-        }
-
-
-        .login-footer {
-
-            margin-top:
-                25px;
-
-            text-align:
-                center;
-
-            color:
-                #94a3b8;
-
-            font-size:
-                0.74rem;
-
-        }
-
-
-        @media (max-width: 500px) {
-
-            .admin-login-card {
-
-                padding:
-                    24px 20px;
-
-            }
-
-
-            .admin-brand h1 {
-
-                font-size:
-                    1.45rem;
-
-            }
-
-        }
-
-    </style>
+    <!-- =====================================================
+         LAYOUT CSS
+         ===================================================== -->
+
+    <link
+        rel="stylesheet"
+        href="css/layout.css"
+    >
 
 </head>
 
@@ -337,112 +59,140 @@
 <body>
 
 
-<div class="admin-login-page">
+<div class="app-container">
 
 
-    <div class="admin-login-card">
+    <!-- =====================================================
+         LOGIN PAGE
+         ===================================================== -->
+
+    <main class="login-page">
 
 
-        <!-- =================================================
-             BRAND
-             ================================================= -->
-
-        <div class="admin-brand">
-
-            <h1>
-                Adhyayn Library
-            </h1>
-
-            <p>
-                Admin Login
-            </p>
-
-        </div>
+        <div class="login-card glass">
 
 
-        <!-- =================================================
-             ADMIN LOGIN FORM
-             ================================================= -->
+            <!-- =================================================
+                 BRAND
+                 ================================================= -->
 
-        <form
-            id="admin-login-form"
-        >
-          <!-- ADMIN EMAIL -->
+            <div class="login-header">
 
-            <div class="form-group">
+                <h1>
+                    Adhyayn Library
+                </h1>
 
-                <label
-                    for="admin-email"
-                >
-                    Admin Email
-                </label>
-
-
-                <input
-                    type="email"
-                    id="admin-email"
-                    placeholder="Enter admin email"
-                    autocomplete="email"
-                    required
-                >
+                <p>
+                    Admin Portal
+                </p>
 
             </div>
 
 
-            <!-- PASSWORD -->
+            <!-- =================================================
+                 ADMIN LOGIN
+                 ================================================= -->
 
-            <div class="form-group">
+            <form
+                id="admin-login-form"
+            >
 
-                <label
-                    for="admin-password"
+
+                <!-- ADMIN EMAIL -->
+
+                <div class="form-group">
+
+                    <label
+                        for="admin-email"
+                    >
+                        Admin Email
+                    </label>
+
+
+                    <input
+                        type="email"
+                        id="admin-email"
+                        placeholder="Enter admin email"
+                        autocomplete="email"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- PASSWORD -->
+
+                <div class="form-group">
+
+                    <label
+                        for="admin-password"
+                    >
+                        Password
+                    </label>
+
+
+                    <input
+                        type="password"
+                        id="admin-password"
+                        placeholder="Enter password"
+                        autocomplete="current-password"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- LOGIN -->
+
+                <button
+                    type="submit"
+                    class="login-button"
                 >
-                    Password
-                </label>
+                    Admin Login
+                </button>
 
 
-                <input
-                    type="password"
-                    id="admin-password"
-                    placeholder="Enter password"
-                    autocomplete="current-password"
-                    required
+                <!-- FORGOT PASSWORD -->
+
+                <a
+                    href="#"
+                    id="forgot-password-btn"
+                    class="forgot-password"
                 >
+                    Forgot Password?
+                </a>
+
+
+            </form>
+
+
+            <!-- =================================================
+                 LOGIN MESSAGE
+                 ================================================= -->
+
+            <div
+                id="login-message"
+                class="login-message"
+                aria-live="polite"
+            ></div>
+
+
+            <!-- =================================================
+                 FOOTER
+                 ================================================= -->
+
+            <div class="login-footer">
+
+                Adhyayn Library Admin Portal
 
             </div>
 
 
-            <!-- LOGIN -->
-
-            <button
-                type="submit"
-                class="login-button"
-            >
-                Admin Login
-            </button>
-
-
-            <!-- FORGOT PASSWORD -->
-
-            <a
-                href="#"
-                id="forgot-password-btn"
-                class="forgot-password"
-            >
-                Forgot Password?
-            </a>
-
-
-        </form>
-
-
-        <div class="login-footer">
-
-            Adhyayn Library Admin Portal
-
         </div>
 
 
-    </div>
+    </main>
+
 
 </div>
 
@@ -467,135 +217,6 @@
      ========================================================= -->
 
 <script src="js/dashboard.js"></script>
-
-
-<!-- =========================================================
-     ADMIN LOGIN INITIALIZATION
-     ========================================================= -->
-
-<script>
-
-document.addEventListener(
-    "DOMContentLoaded",
-    function () {
-
-
-        /*
-         * Admin authentication pipeline
-         */
-
-        if (
-            typeof bindGatewayAuthPipelines ===
-            "function"
-        ) {
-
-            bindGatewayAuthPipelines();
-
-        }
-
-
-        /*
-         * Forgot password
-         */
-
-        const forgotButton =
-            document.getElementById(
-                "forgot-password-btn"
-            );
-
-
-        if (forgotButton) {
-
-            forgotButton.addEventListener(
-                "click",
-                async function (event) {
-
-                    event.preventDefault();
-
-
-                    const emailInput =
-                        document.getElementById(
-                            "admin-email"
-                        );
-
-
-                    const email =
-                        emailInput
-                            ? emailInput.value.trim()
-                            : "";
-
-
-                    if (!email) {
-
-                        alert(
-                            "Please enter your Admin email address first."
-                        );
-
-
-                        if (emailInput) {
-
-                            emailInput.focus();
-
-                        }
-
-
-                        return;
-
-                    }
-
-
-                    const result =
-                        await sendAdminPasswordReset(
-                            email
-                        );
-
-
-                    alert(
-                        result.message
-                    );
-
-                }
-            );
-
-        }
-
-    }
-);
-
-
-/*
- * PWA Service Worker
- */
-
-if (
-    "serviceWorker" in navigator
-) {
-
-    window.addEventListener(
-        "load",
-        function () {
-
-            navigator.serviceWorker
-                .register(
-                    "service-worker.js"
-                )
-                .catch(
-                    function (error) {
-
-                        console.error(
-                            "Service Worker registration failed:",
-                            error
-                        );
-
-                    }
-                );
-
-        }
-    );
-
-}
-
-</script>
 
 
 </body>
