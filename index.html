@@ -10,7 +10,7 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>Adhyayn Library</title>
+    <title>Adhyayn Library - Admin Login</title>
 
 
     <!-- =====================================================
@@ -24,7 +24,7 @@
 
     <link
         rel="preconnect"
-        href="https://fonts.gstatic.com"
+        href="https://fonts.googleapis.com"
         crossorigin
     >
 
@@ -43,40 +43,29 @@
         href="css/style.css"
     >
 
-
-    <!-- =====================================================
-         LAYOUT CSS
-         ===================================================== -->
-
-    <link
-        rel="stylesheet"
-        href="css/layout.css"
-    >
-
 </head>
 
 
 <body>
 
 
-<div class="app-container">
+<!-- =========================================================
+     LOGIN PAGE
+     ========================================================= -->
+
+<div class="login-page">
 
 
-    <!-- =====================================================
-         LOGIN PAGE
-         ===================================================== -->
-
-    <main class="login-page">
+    <div class="login-card">
 
 
-        <div class="login-card glass">
+        <!-- =================================================
+             BRAND
+             ================================================= -->
 
+        <div class="login-brand">
 
-            <!-- =================================================
-                 BRAND
-                 ================================================= -->
-
-            <div class="login-header">
+            <div class="brand-name">
 
                 <h1>
                     Adhyayn Library
@@ -88,82 +77,81 @@
 
             </div>
 
+        </div>
+
+
+        <!-- =================================================
+             LOGIN TITLE
+             ================================================= -->
+
+        <div class="login-header">
+
+            <h2>
+                Admin Login
+            </h2>
+
+            <p>
+                Sign in to manage your library
+            </p>
+
+        </div>
+
+
+        <!-- =================================================
+             ADMIN LOGIN FORM
+             ================================================= -->
+
+        <form
+            id="admin-login-form"
+        >
+
 
             <!-- =================================================
-                 ADMIN LOGIN
+                 ADMIN EMAIL
                  ================================================= -->
 
-            <form
-                id="admin-login-form"
-            >
+            <div class="form-group">
 
-
-                <!-- ADMIN EMAIL -->
-
-                <div class="form-group">
-
-                    <label
-                        for="admin-email"
-                    >
-                        Admin Email
-                    </label>
-
-
-                    <input
-                        type="email"
-                        id="admin-email"
-                        placeholder="Enter admin email"
-                        autocomplete="email"
-                        required
-                    >
-
-                </div>
-
-
-                <!-- PASSWORD -->
-
-                <div class="form-group">
-
-                    <label
-                        for="admin-password"
-                    >
-                        Password
-                    </label>
-
-
-                    <input
-                        type="password"
-                        id="admin-password"
-                        placeholder="Enter password"
-                        autocomplete="current-password"
-                        required
-                    >
-
-                </div>
-
-
-                <!-- LOGIN -->
-
-                <button
-                    type="submit"
-                    class="login-button"
+                <label
+                    for="admin-email"
                 >
-                    Admin Login
-                </button>
+                    Admin Email
+                </label>
 
 
-                <!-- FORGOT PASSWORD -->
-
-                <a
-                    href="#"
-                    id="forgot-password-btn"
-                    class="forgot-password"
+                <input
+                    type="email"
+                    id="admin-email"
+                    placeholder="Enter admin email"
+                    autocomplete="email"
+                    required
                 >
-                    Forgot Password?
-                </a>
+
+            </div>
 
 
-            </form>
+            <!-- =================================================
+                 PASSWORD
+                 ================================================= -->
+
+            <div class="form-group">
+
+                <label
+                    for="admin-password"
+                >
+                    Password
+                </label>
+
+
+                <input
+                    type="password"
+                    id="admin-password"
+                    placeholder="Enter password"
+                    autocomplete="current-password"
+                    required
+                >
+
+            </div>
 
 
             <!-- =================================================
@@ -178,20 +166,68 @@
 
 
             <!-- =================================================
-                 FOOTER
+                 LOGIN BUTTON
                  ================================================= -->
 
-            <div class="login-footer">
+            <button
+                type="submit"
+                class="login-button"
+            >
+                Admin Login
+            </button>
 
-                Adhyayn Library Admin Portal
 
-            </div>
+            <!-- =================================================
+                 FORGOT PASSWORD
+                 ================================================= -->
 
+            <a
+                href="#"
+                id="forgot-password-btn"
+                class="forgot-password"
+            >
+                Forgot Password?
+            </a>
+
+
+        </form>
+
+
+        <!-- =================================================
+             DEVELOPMENT INFORMATION
+             ================================================= -->
+
+        <div
+            class="login-development-info"
+        >
+
+            Demo Admin
+
+            <br>
+
+            Email:
+            demo@adhyayn.com
+
+            <br>
+
+            Password:
+            Demo@12345
 
         </div>
 
 
-    </main>
+        <!-- =================================================
+             FOOTER
+             ================================================= -->
+
+        <div class="login-footer">
+
+            Adhyayn Library Admin Portal
+
+        </div>
+
+
+    </div>
 
 
 </div>
@@ -209,11 +245,9 @@
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-functions.js"></script>
 
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app-check.js"></script>
-
 
 <!-- =========================================================
-     SHARED CORE
+     SHARED ADMIN CORE
      ========================================================= -->
 
 <script src="js/dashboard.js"></script>
