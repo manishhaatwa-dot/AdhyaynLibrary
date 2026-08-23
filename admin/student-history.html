@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Student History</title>
+
+
+    <!-- =====================================================
+         GOOGLE FONTS
+         ===================================================== -->
+
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
+
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+        crossorigin
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+
+    <!-- =====================================================
+         GLOBAL CSS
+         ===================================================== -->
+
+    <link
+        rel="stylesheet"
+        href="../css/style.css"
+    >
+
+
+    <!-- =====================================================
+         LAYOUT CSS
+         ===================================================== -->
+
+    <link
+        rel="stylesheet"
+        href="../css/layout.css"
+    >
+
+
+    <!-- =====================================================
+         STUDENTS CSS
+         ===================================================== -->
+
+    <link
+        rel="stylesheet"
+        href="../css/students.css"
+    >
+
+</head>
+
+
+<body>
+
+
+<div class="app-container">
+
+
+    <!-- =====================================================
+         SIDEBAR
+         ===================================================== -->
+
+    <div
+        id="sidebar-container"
+    ></div>
+
+
+    <div class="main-content">
+
+
+        <!-- =================================================
+             NAVBAR
+             ================================================= -->
+
+        <div
+            id="navbar-container"
+        ></div>
+
+
+        <!-- =================================================
+             MAIN CONTENT
+             ================================================= -->
+
+        <main class="content-body">
+
+
+            <!-- =================================================
+                 PAGE HEADER
+                 ================================================= -->
+
+            <div class="students-header">
+
+                <div class="header-titles">
+
+                    <h1>
+                        Student History
+                    </h1>
+
+
+                    <p>
+                        View students who previously left or were
+                        removed from this library.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 SEARCH
+                 ================================================= -->
+
+            <div
+                class="search-filter-panel glass"
+            >
+
+                <div class="search-box">
+
+                    <input
+                        type="text"
+                        id="student-history-search-input"
+                        placeholder="Search by Name, Login Code, Seat, Class or Mobile..."
+                        autocomplete="off"
+                    >
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 HISTORY TABLE
+                 ================================================= -->
+
+            <div
+                class="students-table-card glass"
+            >
+
+                <div
+                    class="table-scroll-container"
+                >
+
+                    <table
+                        class="students-data-table"
+                    >
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Login Code
+                                </th>
+
+
+                                <th>
+                                    Student Name
+                                </th>
+
+
+                                <th>
+                                    Father's Name
+                                </th>
+
+
+                                <th>
+                                    Class
+                                </th>
+
+
+                                <th>
+                                    Seat No
+                                </th>
+
+
+                                <th>
+                                    Mobile
+                                </th>
+
+
+                                <th>
+                                    Shift
+                                </th>
+
+
+                                <th>
+                                    Joining Date
+                                </th>
+
+
+                                <th>
+                                    Expiry Date
+                                </th>
+
+
+                                <th>
+                                    Fee Status
+                                </th>
+
+
+                                <th>
+                                    Deleted Date
+                                </th>
+
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody
+                            id="student-history-table-rows"
+                        >
+
+                            <tr>
+
+                                <td
+                                    colspan="11"
+                                    class="table-empty"
+                                    style="
+                                        text-align:center;
+                                        padding:2rem;
+                                    "
+                                >
+                                    Loading student history...
+                                </td>
+
+                            </tr>
+
+                        </tbody>
+
+
+                    </table>
+
+                </div>
+
+            </div>
+
+
+        </main>
+
+
+        <!-- =================================================
+             FOOTER
+             ================================================= -->
+
+        <div
+            id="footer-container"
+        ></div>
+
+
+    </div>
+
+
+</div>
+
+
+<!-- =========================================================
+     FIREBASE SDK
+     ========================================================= -->
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+
+<!-- =========================================================
+     SHARED CORE
+     ========================================================= -->
+
+<script src="../js/dashboard.js"></script>
+
+
+<!-- =========================================================
+     STUDENT HISTORY LOGIC
+     ========================================================= -->
+
+<script src="../js/student-history.js"></script>
+
+
+</body>
+
+</html>
