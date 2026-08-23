@@ -2030,37 +2030,26 @@ window.showFirstLoginPasswordChange =
    ========================================================================== */
 
 /*
- * NEW PRODUCTION FLOW
+ * SINGLE-LIBRARY ADMIN LOGIN
  *
- * Library ID
- * +
+ * Admin login requires only:
+ *
  * Email
  * +
  * Password
- *       ↓
- * Firebase Authentication
- *       ↓
- * Firebase UID
- *       ↓
- * libcontrol_libraries/{libraryId}/admins/{UID}
  *
- * IMPORTANT:
+ * There is NO Library ID in the login process.
  *
- * No password is checked against Firestore.
- * No password is stored in Firestore.
+ * The authenticated Firebase account identifies the Admin.
+ *
+ * The Admin authorization record is then checked against
+ * the single personal-library configuration.
  */
 
 async function adminLogin(
-    libraryId,
     email,
     password
 ) {
-
-    const id =
-        normalizeLibraryId(
-            libraryId
-        );
-
 
     const normalizedEmail =
         String(
@@ -2077,7 +2066,6 @@ async function adminLogin(
 
 
     if (
-        !id ||
         !normalizedEmail ||
         !pass
     ) {
@@ -2087,7 +2075,7 @@ async function adminLogin(
             success: false,
 
             message:
-                "Please enter Library ID, Email and Password."
+                "Please enter Email and Password."
 
         };
 
@@ -2115,82 +2103,9 @@ async function adminLogin(
     try {
 
         /*
-         * Check library before authentication.
-         */
-
-        const libraryResult =
-            await validateLibrary(
-                id
-            );
-
-
-        if (!libraryResult.valid) {
-
-            if (
-                libraryResult.reason ===
-                "NOT_FOUND"
-            ) {
-
-                return {
-
-                    success: false,
-
-                    message:
-                        "Login Failed: Invalid Library or credentials."
-
-                };
-
-            }
-
-
-            if (
-                libraryResult.reason ===
-                "NOT_APPROVED"
-            ) {
-
-                return {
-
-                    success: false,
-
-                    message:
-                        "Access Restricted: Library awaiting approval."
-
-                };
-
-            }
-
-
-            if (
-                libraryResult.reason ===
-                "DISABLED"
-            ) {
-
-                return {
-
-                    success: false,
-
-                    message:
-                        "Access Suspended: Library disabled."
-
-                };
-
-            }
-
-
-            return {
-
-                success: false,
-
-                message:
-                    "Unable to verify library."
-
-            };
-
-        }
-
-
-        /*
-         * Firebase Authentication.
+         * ----------------------------------------------------------
+         * Firebase Authentication
+         * ----------------------------------------------------------
          */
 
         const credential =
@@ -2216,8 +2131,7 @@ async function adminLogin(
 
 
         /*
-         * Email verification is required
-         * before normal Admin access.
+         * Email verification is required.
          */
 
         if (
@@ -2243,19 +2157,36 @@ async function adminLogin(
 
 
         /*
-         * Verify the authenticated UID
-         * against the selected library.
+         * ----------------------------------------------------------
+         * SINGLE-LIBRARY ADMIN RECORD
+         * ----------------------------------------------------------
+         *
+         * The admin document is located directly under the
+         * single personal library configuration.
+         *
+         * The exact library root will be resolved by the
+         * single-library configuration.
          */
 
-        const authorization =
-            await getAdminAuthorization(
-                user,
-                id
-            );
+        const adminSnapshot =
+            await window.db
+                .collection(
+                    "libmanage_secure_v2"
+                )
+                .doc(
+                    "library"
+                )
+                .collection(
+                    "admins"
+                )
+                .doc(
+                    user.uid
+                )
+                .get();
 
 
         if (
-            !authorization.authorized
+            !adminSnapshot.exists
         ) {
 
             await firebase
@@ -2263,46 +2194,31 @@ async function adminLogin(
                 .signOut();
 
 
-            let message =
-                "Access Denied: Admin authorization failed.";
+            return {
+
+                success: false,
+
+                message:
+                    "Access Denied: This account is not registered as an Admin."
+
+            };
+
+        }
 
 
-            if (
-                authorization.reason ===
-                "ADMIN_NOT_FOUND"
-            ) {
+        const adminData =
+            adminSnapshot.data() || {};
 
-                message =
-                    "Access Denied: This account is not registered as an Admin for this library.";
 
-            }
-            else if (
-                authorization.reason ===
-                "INVALID_ROLE"
-            ) {
+        if (
+            adminData.uid &&
+            adminData.uid !==
+            user.uid
+        ) {
 
-                message =
-                    "Access Denied: Invalid Admin role.";
-
-            }
-            else if (
-                authorization.reason ===
-                "LIBRARY_MISMATCH"
-            ) {
-
-                message =
-                    "Access Denied: This Admin is not authorized for this library.";
-
-            }
-            else if (
-                authorization.reason ===
-                "ADMIN_DISABLED"
-            ) {
-
-                message =
-                    "Access Denied: This Admin account is disabled.";
-
-            }
+            await firebase
+                .auth()
+                .signOut();
 
 
             return {
@@ -2310,7 +2226,51 @@ async function adminLogin(
                 success: false,
 
                 message:
-                    message
+                    "Access Denied: Admin authorization failed."
+
+            };
+
+        }
+
+
+        if (
+            adminData.role !==
+            "admin"
+        ) {
+
+            await firebase
+                .auth()
+                .signOut();
+
+
+            return {
+
+                success: false,
+
+                message:
+                    "Access Denied: Invalid Admin role."
+
+            };
+
+        }
+
+
+        if (
+            adminData.enabled ===
+            false
+        ) {
+
+            await firebase
+                .auth()
+                .signOut();
+
+
+            return {
+
+                success: false,
+
+                message:
+                    "Access Denied: This Admin account is disabled."
 
             };
 
@@ -2318,10 +2278,40 @@ async function adminLogin(
 
 
         /*
-         * Create local convenience session.
-         *
-         * Firebase Auth remains the real authentication
-         * session.
+         * ----------------------------------------------------------
+         * SINGLE LIBRARY DATA
+         * ----------------------------------------------------------
+         */
+
+        const librarySnapshot =
+            await window.db
+                .collection(
+                    "libmanage_secure_v2"
+                )
+                .doc(
+                    "library"
+                )
+                .get();
+
+
+        const libraryData =
+            librarySnapshot.exists
+                ? (
+                    librarySnapshot.data() ||
+                    {}
+                )
+                : {
+
+                    name:
+                        "Adhyayn Library"
+
+                };
+
+
+        /*
+         * ----------------------------------------------------------
+         * CREATE ADMIN SESSION
+         * ----------------------------------------------------------
          */
 
         const session =
@@ -2329,11 +2319,11 @@ async function adminLogin(
 
                 user,
 
-                id,
+                "library",
 
-                authorization.library,
+                libraryData,
 
-                authorization.admin
+                adminData
 
             );
 
@@ -2346,10 +2336,10 @@ async function adminLogin(
                 user,
 
             admin:
-                authorization.admin,
+                adminData,
 
             library:
-                authorization.library,
+                libraryData,
 
             session:
                 session
@@ -2360,7 +2350,7 @@ async function adminLogin(
     catch (error) {
 
         console.error(
-            "[LibControl] Admin Firebase login error:",
+            "[Adhyayn Library] Admin Firebase login error:",
             error
         );
 
@@ -2453,7 +2443,6 @@ async function adminLogin(
 
 window.adminLogin =
     adminLogin;
-
 
 /* ==========================================================================
    17. ADMIN EMAIL VERIFICATION
@@ -3337,7 +3326,6 @@ function requireManagerSession() {
 window.requireManagerSession =
     requireManagerSession;
 
-
 /* ==========================================================================
    24. GATEWAY AUTH PIPELINES
    ========================================================================== */
@@ -3382,42 +3370,43 @@ function bindGatewayAuthPipelines() {
                     );
 
 
-               const emailInput =
-    document.getElementById(
-        "student-email"
-    );
+                const emailInput =
+                    document.getElementById(
+                        "student-email"
+                    );
 
 
-const passwordInput =
-    document.getElementById(
-        "student-password"
-    );
+                const passwordInput =
+                    document.getElementById(
+                        "student-password"
+                    );
 
 
-if (
-    !libraryInput ||
-    !emailInput ||
-    !passwordInput
-) {
+                if (
+                    !libraryInput ||
+                    !emailInput ||
+                    !passwordInput
+                ) {
 
-    alert(
-        "Student login fields not found."
-    );
+                    alert(
+                        "Student login fields not found."
+                    );
 
-    return;
+                    return;
 
-}
+                }
 
 
-const result =
-    await studentLogin(
+                const result =
+                    await studentLogin(
 
-        libraryInput.value,
+                        libraryInput.value,
 
-        emailInput.value,
+                        emailInput.value,
 
-        passwordInput.value
-    );
+                        passwordInput.value
+
+                    );
 
 
                 if (
@@ -3464,11 +3453,15 @@ const result =
                 event.preventDefault();
 
 
-                const libraryInput =
-                    document.getElementById(
-                        "admin-library-id"
-                    );
-
+                /*
+                 * Single-library Admin login:
+                 *
+                 * Email
+                 * +
+                 * Password
+                 *
+                 * Library ID is NOT required.
+                 */
 
                 const emailInput =
                     document.getElementById(
@@ -3482,22 +3475,13 @@ const result =
                     );
 
 
-                /*
-                 * Current gateway HTML must eventually
-                 * contain admin-email.
-                 *
-                 * We deliberately do not fall back to
-                 * adminPass or Firestore password.
-                 */
-
                 if (
-                    !libraryInput ||
                     !emailInput ||
                     !passwordInput
                 ) {
 
                     alert(
-                        "Admin login fields are incomplete. Admin Email field is required."
+                        "Admin login fields are incomplete. Email and Password are required."
                     );
 
                     return;
@@ -3507,8 +3491,6 @@ const result =
 
                 const result =
                     await adminLogin(
-
-                        libraryInput.value,
 
                         emailInput.value,
 
@@ -3561,26 +3543,26 @@ const result =
 
                 /*
                  * First-login password change.
-                 *
-                 * The actual screen will be handled by
-                 * the Admin Login UI in the next Admin file step.
                  */
 
-           if (
-    result.admin &&
-    result.admin.mustChangePassword ===
-    true
-) {
+                if (
+                    result.admin &&
+                    result.admin.mustChangePassword ===
+                    true
+                ) {
 
-    showFirstLoginPasswordChange(
-        normalizeLibraryId(
-            libraryInput.value
-        )
-    );
+                    showFirstLoginPasswordChange(
+                        "library"
+                    );
 
-    return;
+                    return;
 
-}
+                }
+
+
+                /*
+                 * Successful Admin login.
+                 */
 
                 window.location.href =
                     getPagePath(
@@ -3597,7 +3579,6 @@ const result =
 
 window.bindGatewayAuthPipelines =
     bindGatewayAuthPipelines;
-
 
 /* ==========================================================================
    25. LIBRARY NAVIGATION
