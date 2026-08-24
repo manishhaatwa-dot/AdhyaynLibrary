@@ -63,6 +63,7 @@
     transform: translateY(-1px);
 }
 
+
 /* ==========================================================================
    SEARCH
    ========================================================================== */
@@ -127,6 +128,7 @@
 .search-box input:focus {
     outline: none;
 }
+
 
 /* ==========================================================================
    STUDENT TABLE
@@ -212,18 +214,24 @@
         #f8fafc;
 }
 
+
 /* ==========================================================================
    STATUS
    ========================================================================== */
 
 .status-tag {
-    display: inline-block;
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    min-height: 28px;
 
     padding:
-        0.2rem 0.5rem;
+        0.25rem 0.65rem;
 
     border-radius:
-        4px;
+        6px;
 
     font-size:
         0.75rem;
@@ -236,6 +244,9 @@
 
     white-space:
         nowrap;
+
+    box-sizing:
+        border-box;
 }
 
 .status-tag.active {
@@ -253,6 +264,237 @@
     color:
         #dc2626;
 }
+
+
+/* ==========================================================================
+   FEE STATUS + RECEIPT
+   ========================================================================== */
+
+/*
+ * Fee Status column:
+ * PAID / DUE and Receipt are kept visually separate.
+ */
+
+.students-data-table th:nth-child(9),
+.students-data-table td:nth-child(9) {
+    min-width:
+        115px;
+
+    white-space:
+        nowrap;
+}
+
+
+/*
+ * Fee status clickable button / tag
+ */
+
+.students-data-table td:nth-child(9) .status-tag {
+    margin-bottom:
+        0.45rem;
+
+    cursor:
+        pointer;
+
+    user-select:
+        none;
+
+    border:
+        1px solid transparent;
+
+    transition:
+        var(--transition-smooth);
+}
+
+
+/*
+ * Extra feedback when the fee status itself is a button.
+ */
+
+.students-data-table td:nth-child(9) button.status-tag:hover,
+.students-data-table td:nth-child(9) .status-tag[role="button"]:hover {
+    transform:
+        translateY(-1px);
+
+    box-shadow:
+        0 3px 8px
+        rgba(15, 23, 42, 0.10);
+}
+
+
+/*
+ * Receipt button.
+ *
+ * This applies to the receipt button inside the Fee Status cell
+ * without affecting Edit / Delete buttons.
+ */
+
+.students-data-table td:nth-child(9) button:not(.status-tag),
+.students-data-table td:nth-child(9) a {
+    display:
+        inline-flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    width:
+        fit-content;
+
+    min-width:
+        78px;
+
+    min-height:
+        30px;
+
+    padding:
+        0.35rem 0.65rem;
+
+    margin-top:
+        0.1rem;
+
+    box-sizing:
+        border-box;
+
+    border:
+        1px solid #e2e8f0;
+
+    border-radius:
+        6px;
+
+    background:
+        #ffffff;
+
+    color:
+        #475569;
+
+    font-family:
+        inherit;
+
+    font-size:
+        0.75rem;
+
+    font-weight:
+        600;
+
+    line-height:
+        1.2;
+
+    text-decoration:
+        none;
+
+    white-space:
+        nowrap;
+
+    cursor:
+        pointer;
+
+    box-shadow:
+        0 2px 5px
+        rgba(15, 23, 42, 0.06);
+
+    transition:
+        var(--transition-smooth);
+}
+
+.students-data-table td:nth-child(9) button:not(.status-tag):hover,
+.students-data-table td:nth-child(9) a:hover {
+    background:
+        #f8fafc;
+
+    color:
+        var(--primary-color);
+
+    border-color:
+        #cbd5e1;
+
+    transform:
+        translateY(-1px);
+}
+
+
+/*
+ * If Receipt is rendered as a text element with a receipt class.
+ */
+
+.students-data-table td:nth-child(9) .receipt-btn,
+.students-data-table td:nth-child(9) .receipt-button {
+    display:
+        inline-flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    min-width:
+        78px;
+
+    min-height:
+        30px;
+
+    padding:
+        0.35rem 0.65rem;
+
+    margin-top:
+        0.1rem;
+
+    box-sizing:
+        border-box;
+
+    border:
+        1px solid #e2e8f0;
+
+    border-radius:
+        6px;
+
+    background:
+        #ffffff;
+
+    color:
+        #475569;
+
+    font-size:
+        0.75rem;
+
+    font-weight:
+        600;
+
+    line-height:
+        1.2;
+
+    white-space:
+        nowrap;
+
+    cursor:
+        pointer;
+
+    box-shadow:
+        0 2px 5px
+        rgba(15, 23, 42, 0.06);
+
+    transition:
+        var(--transition-smooth);
+}
+
+.students-data-table td:nth-child(9) .receipt-btn:hover,
+.students-data-table td:nth-child(9) .receipt-button:hover {
+    background:
+        #f8fafc;
+
+    color:
+        var(--primary-color);
+
+    border-color:
+        #cbd5e1;
+
+    transform:
+        translateY(-1px);
+}
+
 
 /* ==========================================================================
    ACTIONS
@@ -325,6 +567,7 @@
     color:
         #dc2626;
 }
+
 
 /* ==========================================================================
    MODAL
@@ -426,6 +669,7 @@
         scale(1);
 }
 
+
 /* ==========================================================================
    MODAL HEADER
    ========================================================================== */
@@ -510,6 +754,7 @@
         var(--text-main);
 }
 
+
 /* ==========================================================================
    GENERATED LOGIN CODE
    ========================================================================== */
@@ -561,6 +806,7 @@
     letter-spacing:
         0.04em;
 }
+
 
 /* ==========================================================================
    FORM
@@ -657,6 +903,7 @@
         0 0 0 3px
         rgba(37, 99, 235, 0.12);
 }
+
 
 /* ==========================================================================
    FORM ACTIONS
@@ -758,6 +1005,7 @@
         translateY(-1px);
 }
 
+
 /* ==========================================================================
    HIDDEN UTILITY
    ========================================================================== */
@@ -766,6 +1014,7 @@
     display:
         none !important;
 }
+
 
 /* ==========================================================================
    EMPTY TABLE
@@ -784,6 +1033,7 @@
     font-style:
         italic;
 }
+
 
 /* ==========================================================================
    MOBILE
@@ -826,6 +1076,7 @@
     }
 
 }
+
 
 /* ==========================================================================
    SMALL MOBILE
