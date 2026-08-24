@@ -1,11 +1,13 @@
 const functions = require("firebase-functions");
-const admin = require("firebase-admin");
+const { initializeApp } = require("firebase-admin/app");
+const {
+    getFirestore,
+    FieldValue
+} = require("firebase-admin/firestore");
 
-admin.initializeApp();
+initializeApp();
 
-const db = admin.firestore();
-
-
+const db = getFirestore();
 /* ==========================================================================
    DEMO ADMIN SETUP
    ========================================================================== */
@@ -105,9 +107,7 @@ exports.setupDemoAdmin = functions.https.onCall(
                         demoEmail,
 
                     updatedAt:
-                        admin.firestore
-                            .FieldValue
-                            .serverTimestamp()
+                     FieldValue.serverTimestamp()
 
                 }, {
 
@@ -154,9 +154,10 @@ exports.setupDemoAdmin = functions.https.onCall(
                         "Adhyayn Library",
 
                     createdAt:
-                        admin.firestore
-                            .FieldValue
-                            .serverTimestamp()
+                        
+                            FieldValue.serverTimestamp()
+
+                            
 
                 }, {
 
