@@ -18,9 +18,24 @@
  * - Authentication = Admin authentication
  * - Firestore = Library/Admin/Student data
  *
+ * CURRENT FIRESTORE STRUCTURE:
+ *
+ * adhyayn_libraries
+ *   └── ADHYAYN_MAIN
+ *       ├── admins
+ *       │   └── ADMIN_UID
+ *       ├── students
+ *       │   └── S01
+ *       ├── seats
+ *       │   └── SEAT-001
+ *       ├── configuration
+ *       │   └── seats
+ *       └── student_history
+ *           └── S01
+ *
  * EMAIL VERIFICATION:
  * Disabled during development.
- * Enable before production.
+ *
  * ==========================================================================
  */
 
@@ -336,7 +351,181 @@ window.adminReference =
 
 
 /* ==========================================================================
-   10. WAIT FOR AUTH USER
+   10. LIBMANAGE DATABASE API
+   ========================================================================== */
+
+/*
+ * IMPORTANT
+ * ----------
+ * Students.js and Seats.js use window.LibManageDB.
+ *
+ * This object was missing from the previous dashboard.js.
+ *
+ * All references below use the CURRENT Firestore structure:
+ *
+ * adhyayn_libraries
+ *   └── LIBRARY_ID
+ *
+ * No old libmanage_secure_v2 structure is used here.
+ */
+
+window.LibManageDB = {
+
+    /*
+     * --------------------------------------------------------------
+     * Library
+     * --------------------------------------------------------------
+     */
+
+    library:
+        function (libraryId) {
+
+            return libraryRef(
+                libraryId
+            );
+
+        },
+
+
+    /*
+     * --------------------------------------------------------------
+     * Students Collection
+     * --------------------------------------------------------------
+     */
+
+    students:
+        function (libraryId) {
+
+            return libraryRef(
+                libraryId
+            )
+            .collection(
+                "students"
+            );
+
+        },
+
+
+    /*
+     * --------------------------------------------------------------
+     * Single Student
+     * --------------------------------------------------------------
+     */
+
+    student:
+        function (
+            libraryId,
+            studentCode
+        ) {
+
+            return libraryRef(
+                libraryId
+            )
+            .collection(
+                "students"
+            )
+            .doc(
+                String(
+                    studentCode || ""
+                )
+                .trim()
+                .toUpperCase()
+            );
+
+        },
+
+
+    /*
+     * --------------------------------------------------------------
+     * Seat Configuration
+     * --------------------------------------------------------------
+     */
+
+    seatConfig:
+        function (libraryId) {
+
+            return libraryRef(
+                libraryId
+            )
+            .collection(
+                "configuration"
+            )
+            .doc(
+                "seats"
+            );
+
+        },
+
+
+    /*
+     * --------------------------------------------------------------
+     * Seats Collection
+     * --------------------------------------------------------------
+     */
+
+    seats:
+        function (libraryId) {
+
+            return libraryRef(
+                libraryId
+            )
+            .collection(
+                "seats"
+            );
+
+        },
+
+
+    /*
+     * --------------------------------------------------------------
+     * Student History
+     * --------------------------------------------------------------
+     */
+
+    studentHistory:
+        function (
+            libraryId,
+            studentCode
+        ) {
+
+            const collection =
+                libraryRef(
+                    libraryId
+                )
+                .collection(
+                    "student_history"
+                );
+
+
+            if (
+                studentCode
+            ) {
+
+                return collection.doc(
+                    String(
+                        studentCode
+                    )
+                    .trim()
+                    .toUpperCase()
+                );
+
+            }
+
+
+            return collection;
+
+        }
+
+};
+
+
+console.log(
+    "[Adhyayn] LibManageDB API initialized."
+);
+
+
+/* ==========================================================================
+   11. WAIT FOR AUTH USER
    ========================================================================== */
 
 function waitForFirebaseAuthUser(
@@ -450,7 +639,7 @@ window.waitForFirebaseAuthUser =
 
 
 /* ==========================================================================
-   11. ADMIN AUTHORIZATION
+   12. ADMIN AUTHORIZATION
    ========================================================================== */
 
 async function getAdminAuthorization(
@@ -499,7 +688,7 @@ window.getAdminAuthorization =
 
 
 /* ==========================================================================
-   12. DEMO ADMIN SETUP
+   13. DEMO ADMIN SETUP
    ========================================================================== */
 
 async function setupDemoAdmin() {
@@ -589,7 +778,7 @@ window.setupDemoAdmin =
 
 
 /* ==========================================================================
-   13. ADMIN LOGIN
+   14. ADMIN LOGIN
    ========================================================================== */
 
 async function adminLogin(
@@ -667,20 +856,6 @@ async function adminLogin(
         }
 
 
-        /*
-         * DEVELOPMENT:
-         * Email verification is intentionally skipped.
-         *
-         * PRODUCTION:
-         *
-         * if (!user.emailVerified) {
-         *     throw new Error(
-         *         "Please verify your Admin email first."
-         *     );
-         * }
-         */
-
-
         clearAdminSession();
 
 
@@ -714,10 +889,6 @@ async function adminLogin(
             "Adhyayn Library"
         );
 
-
-        /*
-         * Try to read Admin profile.
-         */
 
         try {
 
@@ -856,7 +1027,7 @@ window.adminLogin =
 
 
 /* ==========================================================================
-   14. FORGOT PASSWORD
+   15. FORGOT PASSWORD
    ========================================================================== */
 
 async function sendAdminPasswordReset(
@@ -933,7 +1104,7 @@ window.sendAdminPasswordReset =
 
 
 /* ==========================================================================
-   15. REQUIRE ADMIN SESSION
+   16. REQUIRE ADMIN SESSION
    ========================================================================== */
 
 async function requireAdminSession() {
@@ -977,27 +1148,6 @@ async function requireAdminSession() {
     }
 
 
-    /*
-     * DEVELOPMENT:
-     * Email verification disabled.
-     *
-     * PRODUCTION:
-     *
-     * if (!user.emailVerified) {
-     *
-     *     await window.auth.signOut();
-     *
-     *     clearAdminSession();
-     *
-     *     window.location.href =
-     *         "../index.html";
-     *
-     *     return false;
-     *
-     * }
-     */
-
-
     return true;
 
 }
@@ -1008,7 +1158,7 @@ window.requireAdminSession =
 
 
 /* ==========================================================================
-   16. LOGOUT
+   17. LOGOUT
    ========================================================================== */
 
 async function logoutAdmin() {
@@ -1049,7 +1199,7 @@ window.logoutAdmin =
 
 
 /* ==========================================================================
-   17. LAYOUT COMPONENT LOADER
+   18. LAYOUT COMPONENT LOADER
    ========================================================================== */
 
 async function loadSaaSLayoutComponent(
@@ -1111,7 +1261,7 @@ window.loadSaaSLayoutComponent =
 
 
 /* ==========================================================================
-   18. LIBRARY NAVIGATION
+   19. LIBRARY NAVIGATION
    ========================================================================== */
 
 function initializeLibraryNavigation() {
@@ -1189,7 +1339,7 @@ window.initializeLibraryNavigation =
 
 
 /* ==========================================================================
-   19. ADMIN LOGIN FORM
+   20. ADMIN LOGIN FORM
    ========================================================================== */
 
 function bindAdminLoginForm() {
@@ -1238,17 +1388,6 @@ function bindAdminLoginForm() {
             'button[type="submit"]'
         );
 
-
-    /*
-     * --------------------------------------------------------------
-     * DEVELOPMENT DEMO CREDENTIALS
-     * --------------------------------------------------------------
-     *
-     * These are only placed into the form.
-     *
-     * The actual Firebase account is created by
-     * setupDemoAdmin Cloud Function.
-     */
 
     if (emailInput) {
 
@@ -1349,7 +1488,7 @@ function bindAdminLoginForm() {
 
 
 /* ==========================================================================
-   20. FORGOT PASSWORD
+   21. FORGOT PASSWORD
    ========================================================================== */
 
 function bindForgotPassword() {
@@ -1425,14 +1564,10 @@ function bindForgotPassword() {
 
 
 /* ==========================================================================
-   21. DEMO ADMIN INITIALIZATION
+   22. DEMO ADMIN INITIALIZATION
    ========================================================================== */
 
 async function initializeDemoAdmin() {
-
-    /*
-     * Only run on the main login page.
-     */
 
     const currentFile =
         window.location.pathname
@@ -1452,13 +1587,6 @@ async function initializeDemoAdmin() {
 
     }
 
-
-    /*
-     * Do not create the account every time.
-     *
-     * Firebase Function itself safely checks whether
-     * the account already exists.
-     */
 
     try {
 
@@ -1499,7 +1627,7 @@ async function initializeDemoAdmin() {
 
 
 /* ==========================================================================
-   22. EXISTING ADMIN SESSION
+   23. EXISTING ADMIN SESSION
    ========================================================================== */
 
 async function checkExistingAdminSession() {
@@ -1554,7 +1682,7 @@ async function checkExistingAdminSession() {
 
 
 /* ==========================================================================
-   23. DOM READY
+   24. DOM READY
    ========================================================================== */
 
 document.addEventListener(
@@ -1566,17 +1694,8 @@ document.addEventListener(
         bindForgotPassword();
 
 
-        /*
-         * First ensure the development Admin exists.
-         */
-
         await initializeDemoAdmin();
 
-
-        /*
-         * Then check whether an Admin is
-         * already logged in.
-         */
 
         await checkExistingAdminSession();
 
@@ -1585,7 +1704,7 @@ document.addEventListener(
 
 
 /* ==========================================================================
-   24. GLOBAL CORE
+   25. GLOBAL CORE
    ========================================================================== */
 
 window.AdhyaynCore = {
@@ -1618,11 +1737,19 @@ window.AdhyaynCore = {
 
 
 /* ==========================================================================
-   25. STATUS
+   26. STATUS
    ========================================================================== */
 
 console.log(
     "[Adhyayn] Fresh Admin Core loaded."
+);
+
+console.log(
+    "[Adhyayn] LibManageDB database layer loaded."
+);
+
+console.log(
+    "[Adhyayn] Current Firestore root: adhyayn_libraries"
 );
 
 console.log(
@@ -1631,8 +1758,4 @@ console.log(
 
 console.log(
     "[Adhyayn] Email verification is disabled for development."
-);
-
-console.log(
-    "[Adhyayn] Attendance, Notice, Student Login and Manager Login removed."
 );
