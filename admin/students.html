@@ -136,18 +136,16 @@
                 class="search-filter-panel glass"
             >
 
-
                 <div class="search-box">
 
                     <input
                         type="text"
                         id="student-search-input"
-                        placeholder="Search by Name, Unique Login Code, Seat or Class..."
+                        placeholder="Search by Name, Login Code, Seat or Class..."
                         autocomplete="off"
                     >
 
                 </div>
-
 
             </div>
 
@@ -160,16 +158,13 @@
                 class="students-table-card glass"
             >
 
-
                 <div
                     class="table-scroll-container"
                 >
 
-
                     <table
                         class="students-data-table"
                     >
-
 
                         <thead>
 
@@ -191,7 +186,7 @@
 
 
                                 <th>
-                                    Father's Name
+                                    Email
                                 </th>
 
 
@@ -206,12 +201,12 @@
 
 
                                 <th>
-                                    Expiry Date
+                                    Fee Due Date
                                 </th>
 
 
                                 <th>
-                                    Fee Due Date
+                                    Mobile
                                 </th>
 
 
@@ -221,7 +216,7 @@
 
 
                                 <th>
-                                    Status
+                                    Shift
                                 </th>
 
 
@@ -238,7 +233,6 @@
                             id="students-table-rows"
                         >
 
-
                             <tr>
 
                                 <td
@@ -254,15 +248,12 @@
 
                             </tr>
 
-
                         </tbody>
 
 
                     </table>
 
-
                 </div>
-
 
             </div>
 
@@ -310,7 +301,6 @@
 
         <div class="modal-header">
 
-
             <div>
 
                 <h2 id="modal-title-context">
@@ -328,7 +318,6 @@
             >
                 ×
             </button>
-
 
         </div>
 
@@ -351,7 +340,6 @@
                 id="modal-student-code-preview"
             ></strong>
 
-
         </div>
 
 
@@ -366,7 +354,9 @@
         >
 
 
-            <!-- Internal edit information -->
+            <!-- =================================================
+                 INTERNAL EDIT INFORMATION
+                 ================================================= -->
 
             <input
                 type="hidden"
@@ -451,7 +441,28 @@
 
 
                 <!-- =================================================
-                     MOBILE
+                     SEAT NUMBER
+                     ================================================= -->
+
+                <div class="form-group">
+
+                    <label for="std-seat">
+                        Seat Number
+                    </label>
+
+
+                    <input
+                        type="text"
+                        id="std-seat"
+                        placeholder="Enter seat number"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- =================================================
+                     MOBILE NUMBER
                      ================================================= -->
 
                 <div class="form-group">
@@ -600,7 +611,6 @@
 
 
     </div>
-
 
 </div>
 
