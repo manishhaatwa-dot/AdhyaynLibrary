@@ -1,29 +1,38 @@
 /**
  * ==========================================================================
- * LIBCONTROL - STUDENT DIRECTORY MODULE
+ * LIBMANAGE - STUDENT DIRECTORY MODULE
  * ==========================================================================
  *
- * Handles:
- * - Student listing
- * - Search
- * - Add student
- * - Edit student
- * - Delete student
- * - Automatic unique student login code
- * - Seat number
+ * CURRENT STUDENT FORM:
+ * - Student Name
+ * - Student Email
+ * - Class
+ * - Seat Number
+ * - Mobile Number
  * - Shift
- * - Joining date
- * - Fee due date
- * - Fee status Paid / Due
- * - Clickable Fee Status
- * - Receipt button for Paid students
- * - Library-wise Firestore isolation
+ * - Joining Date
+ * - Fee Due Date
+ *
+ * NO:
+ * - Password
+ * - Father's Name
+ * - Expiry Date
+ * - Manual Status field
+ *
+ * FEE STATUS:
+ * - Paid / Due
+ * - Clickable from student table
+ * - Paid => Receipt button
+ *
+ * FIRESTORE:
+ * libcontrol_libraries
+ *   └── LIB-XXXXXX
+ *       └── students
  *
  * IMPORTANT:
- * - No password required
- * - No authentication account creation
- * - Student email is stored only as student information
- * - Uses current LibControl Firestore structure
+ * - Uses LibManageDB when available.
+ * - Has direct Firestore fallback.
+ * - Never uses old saas_libraries structure.
  * ==========================================================================
  */
 
@@ -53,23 +62,27 @@ function studentElement(id) {
 
 
 /* ==========================================================================
-   3. SESSION / DATABASE
+   3. CURRENT LIBRARY SESSION
    ========================================================================== */
 
 function getStudentLibraryContext() {
 
-    const session =
-        typeof getCurrentSession === "function"
-            ? getCurrentSession()
-            : null;
+    if (
+        typeof getCurrentSession !==
+        "function"
+    ) {
 
-
-    if (!session) {
         return null;
+
     }
 
 
+    const session =
+        getCurrentSession();
+
+
     if (
+        !session ||
         session.role !== "admin" ||
         !session.libraryId
     ) {
@@ -85,12 +98,156 @@ function getStudentLibraryContext() {
 
 
 /* ==========================================================================
-   4. STUDENT CODE GENERATOR
+   4. CURRENT LIBRARY ID
+   ========================================================================== */
+
+function getStudentLibraryId() {
+
+    const session =
+        getStudentLibraryContext();
+
+
+    if (!session) {
+
+        return "";
+
+    }
+
+
+    return String(
+        session.libraryId
+    )
+        .trim()
+        .toUpperCase();
+
+}
+
+
+/* ==========================================================================
+   5. STUDENTS FIRESTORE REFERENCE
+   ========================================================================== */
+
+function getStudentsCollectionRef() {
+
+    const libraryId =
+        getStudentLibraryId();
+
+
+    if (!libraryId) {
+
+        return null;
+
+    }
+
+
+    /*
+     * --------------------------------------------------------------
+     * FIRST: USE CURRENT LibManageDB API
+     * --------------------------------------------------------------
+     */
+
+    if (
+        window.LibManageDB &&
+        typeof window.LibManageDB.students ===
+        "function"
+    ) {
+
+        try {
+
+            const reference =
+                window.LibManageDB.students(
+                    libraryId
+                );
+
+
+            if (reference) {
+
+                return reference;
+
+            }
+
+        }
+        catch (error) {
+
+            console.warn(
+                "[Students] LibManageDB.students failed:",
+                error
+            );
+
+        }
+
+    }
+
+
+    /*
+     * --------------------------------------------------------------
+     * FALLBACK: DIRECT CURRENT FIRESTORE STRUCTURE
+     * --------------------------------------------------------------
+     */
+
+    if (
+        window.db &&
+        typeof window.db.collection ===
+        "function"
+    ) {
+
+        return window.db
+            .collection(
+                "libcontrol_libraries"
+            )
+            .doc(
+                libraryId
+            )
+            .collection(
+                "students"
+            );
+
+    }
+
+
+    return null;
+
+}
+
+
+/* ==========================================================================
+   6. SINGLE STUDENT REFERENCE
+   ========================================================================== */
+
+function getStudentReference(
+    studentCode
+) {
+
+    const collection =
+        getStudentsCollectionRef();
+
+
+    if (!collection) {
+
+        return null;
+
+    }
+
+
+    return collection.doc(
+        String(
+            studentCode
+        )
+            .trim()
+            .toUpperCase()
+    );
+
+}
+
+
+/* ==========================================================================
+   7. STUDENT CODE GENERATOR
    ========================================================================== */
 
 function generateStudentCode() {
 
-    let highestNumber = 0;
+    let highestNumber =
+        0;
 
 
     studentRecords.forEach(
@@ -98,10 +255,11 @@ function generateStudentCode() {
 
             const code =
                 String(
-                    student.studentCode || ""
+                    student.studentCode ||
+                    ""
                 )
-                .trim()
-                .toUpperCase();
+                    .trim()
+                    .toUpperCase();
 
 
             const match =
@@ -139,25 +297,29 @@ function generateStudentCode() {
         "S" +
         String(
             highestNumber + 1
-        ).padStart(
-            2,
-            "0"
         )
+            .padStart(
+                2,
+                "0"
+            )
     );
 
 }
 
 
 /* ==========================================================================
-   5. DATE VALIDATION
+   8. DATE VALIDATION
    ========================================================================== */
 
-function isValidDateFormat(value) {
+function isValidDateFormat(
+    value
+) {
 
     const date =
         String(
             value || ""
-        ).trim();
+        )
+            .trim();
 
 
     if (
@@ -172,7 +334,9 @@ function isValidDateFormat(value) {
 
 
     const parts =
-        date.split("/");
+        date.split(
+            "/"
+        );
 
 
     const day =
@@ -197,9 +361,9 @@ function isValidDateFormat(value) {
 
 
     if (
+        day < 1 ||
         month < 1 ||
-        month > 12 ||
-        day < 1
+        month > 12
     ) {
 
         return false;
@@ -225,10 +389,12 @@ function isValidDateFormat(value) {
 
 
 /* ==========================================================================
-   6. DATE CONVERSION
+   9. PARSE INDIAN DATE
    ========================================================================== */
 
-function parseIndianDate(value) {
+function parseIndianDate(
+    value
+) {
 
     if (
         !isValidDateFormat(
@@ -242,26 +408,41 @@ function parseIndianDate(value) {
 
 
     const parts =
-        value.split("/");
+        value.split(
+            "/"
+        );
 
 
     return new Date(
-        parseInt(parts[2], 10),
-        parseInt(parts[1], 10) - 1,
-        parseInt(parts[0], 10)
+        parseInt(
+            parts[2],
+            10
+        ),
+        parseInt(
+            parts[1],
+            10
+        ) - 1,
+        parseInt(
+            parts[0],
+            10
+        )
     );
 
 }
 
 
 /* ==========================================================================
-   7. DATE FORMATTER
+   10. FORMAT DATE
    ========================================================================== */
 
-function formatDateValue(value) {
+function formatDateValue(
+    value
+) {
 
     if (!value) {
+
         return "";
+
     }
 
 
@@ -286,11 +467,17 @@ function formatDateValue(value) {
         return (
             String(
                 value.getDate()
-            ).padStart(2, "0") +
+            ).padStart(
+                2,
+                "0"
+            ) +
             "/" +
             String(
                 value.getMonth() + 1
-            ).padStart(2, "0") +
+            ).padStart(
+                2,
+                "0"
+            ) +
             "/" +
             value.getFullYear()
         );
@@ -298,31 +485,111 @@ function formatDateValue(value) {
     }
 
 
-    return String(value);
+    return String(
+        value
+    );
 
 }
 
 
 /* ==========================================================================
-   8. HTML ESCAPE
+   11. ESCAPE HTML
    ========================================================================== */
 
-function escapeStudentHtml(value) {
+function escapeStudentHtml(
+    value
+) {
 
     return String(
         value ?? ""
     )
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#39;"
+        );
 
 }
 
 
 /* ==========================================================================
-   9. LOAD STUDENTS
+   12. CURRENT FEE STATUS
+   ========================================================================== */
+
+function getStudentFeeStatus(
+    student
+) {
+
+    const value =
+        String(
+            student.feeStatus ||
+            "Paid"
+        )
+            .trim()
+            .toLowerCase();
+
+
+    return value === "due"
+        ? "Due"
+        : "Paid";
+
+}
+
+
+/* ==========================================================================
+   13. CURRENT STUDENT STATUS
+   ==========================================================================
+ *
+ * Since Expiry Date / Status were removed from the form,
+ * status is kept only for compatibility with old records.
+ *
+ * New students are saved as Active.
+ */
+
+function getStudentStatus(
+    student
+) {
+
+    const stored =
+        String(
+            student.status ||
+            ""
+        )
+            .trim()
+            .toLowerCase();
+
+
+    if (
+        stored === "expired"
+    ) {
+
+        return "Expired";
+
+    }
+
+
+    return "Active";
+
+}
+
+
+/* ==========================================================================
+   14. LOAD STUDENTS
    ========================================================================== */
 
 function initializeStudentsModule() {
@@ -334,7 +601,9 @@ function initializeStudentsModule() {
 
 
     if (!tableBody) {
+
         return;
+
     }
 
 
@@ -361,10 +630,11 @@ function initializeStudentsModule() {
     }
 
 
-    if (
-        !window.LibManageDB ||
-        !window.db
-    ) {
+    const studentsCollection =
+        getStudentsCollectionRef();
+
+
+    if (!studentsCollection) {
 
         tableBody.innerHTML = `
             <tr>
@@ -381,12 +651,6 @@ function initializeStudentsModule() {
         return;
 
     }
-
-
-    const studentsCollection =
-        window.LibManageDB.students(
-            session.libraryId
-        );
 
 
     if (
@@ -406,14 +670,18 @@ function initializeStudentsModule() {
 
                 studentRecords =
                     snapshot.docs.map(
-                        (doc) => ({
+                        (doc) => {
 
-                            firestoreId:
-                                doc.id,
+                            return {
 
-                            ...doc.data()
+                                firestoreId:
+                                    doc.id,
 
-                        })
+                                ...doc.data()
+
+                            };
+
+                        }
                     );
 
 
@@ -424,14 +692,16 @@ function initializeStudentsModule() {
                             String(
                                 a.studentName ||
                                 ""
-                            ).toLowerCase();
+                            )
+                                .toLowerCase();
 
 
                         const bName =
                             String(
                                 b.studentName ||
                                 ""
-                            ).toLowerCase();
+                            )
+                                .toLowerCase();
 
 
                         return aName.localeCompare(
@@ -475,7 +745,7 @@ function initializeStudentsModule() {
 
 
 /* ==========================================================================
-   10. RENDER TABLE
+   15. RENDER TABLE
    ========================================================================== */
 
 function renderStudentTable() {
@@ -487,7 +757,9 @@ function renderStudentTable() {
 
 
     if (!tableBody) {
+
         return;
+
     }
 
 
@@ -502,8 +774,8 @@ function renderStudentTable() {
             searchInput?.value ||
             ""
         )
-        .trim()
-        .toLowerCase();
+            .trim()
+            .toLowerCase();
 
 
     const filteredStudents =
@@ -511,7 +783,9 @@ function renderStudentTable() {
             (student) => {
 
                 if (!searchValue) {
+
                     return true;
+
                 }
 
 
@@ -538,8 +812,8 @@ function renderStudentTable() {
                     student.feeStatus
 
                 ]
-                .join(" ")
-                .toLowerCase();
+                    .join(" ")
+                    .toLowerCase();
 
 
                 return searchableText.includes(
@@ -575,26 +849,33 @@ function renderStudentTable() {
     }
 
 
-    let html = "";
+    let html =
+        "";
 
 
     filteredStudents.forEach(
         (student) => {
 
             const feeStatus =
-                String(
-                    student.feeStatus ||
-                    "Paid"
+                getStudentFeeStatus(
+                    student
                 );
 
 
-            const isDue =
-                feeStatus.toLowerCase() ===
-                "due";
-
-
             const feeClass =
-                isDue
+                feeStatus === "Due"
+                    ? "expired"
+                    : "active";
+
+
+            const status =
+                getStudentStatus(
+                    student
+                );
+
+
+            const statusClass =
+                status === "Expired"
                     ? "expired"
                     : "active";
 
@@ -639,14 +920,6 @@ function renderStudentTable() {
 
                     <td>
                         ${escapeStudentHtml(
-                            student.email ||
-                            "-"
-                        )}
-                    </td>
-
-
-                    <td>
-                        ${escapeStudentHtml(
                             student.className ||
                             "-"
                         )}
@@ -674,14 +947,6 @@ function renderStudentTable() {
 
 
                     <td>
-                        ${escapeStudentHtml(
-                            student.mobileNumber ||
-                            "-"
-                        )}
-                    </td>
-
-
-                    <td>
 
                         <button
                             type="button"
@@ -692,31 +957,52 @@ function renderStudentTable() {
                             )}"
                             title="Click to change fee status"
                             style="
-                                border:none;
+                                border:0;
                                 cursor:pointer;
+                                font:inherit;
                             "
                         >
-                            ${escapeStudentHtml(
-                                feeStatus
-                            )}
+                            ${feeStatus}
                         </button>
 
+
+                        ${
+                            feeStatus === "Paid"
+                                ? `
+                                    <button
+                                        type="button"
+                                        class="action-icon-btn receipt-btn"
+                                        data-fee-receipt="${escapeStudentHtml(
+                                            student.studentCode ||
+                                            ""
+                                        )}"
+                                        title="Print Fee Receipt"
+                                    >
+                                        Receipt
+                                    </button>
+                                `
+                                : ""
+                        }
+
                     </td>
 
 
                     <td>
-                        ${escapeStudentHtml(
-                            student.shift ||
-                            "-"
-                        )}
-                    </td>
 
-
-                    <td>
-
-                        <div
-                            class="actions-cell-wrapper"
+                        <span
+                            class="status-tag ${statusClass}"
                         >
+                            ${escapeStudentHtml(
+                                status
+                            )}
+                        </span>
+
+                    </td>
+
+
+                    <td>
+
+                        <div class="actions-cell-wrapper">
 
                             <button
                                 type="button"
@@ -729,25 +1015,6 @@ function renderStudentTable() {
                             >
                                 Edit
                             </button>
-
-
-                            ${
-                                !isDue
-                                    ? `
-                                        <button
-                                            type="button"
-                                            class="action-icon-btn"
-                                            data-student-receipt="${escapeStudentHtml(
-                                                student.studentCode ||
-                                                ""
-                                            )}"
-                                            title="Print Receipt"
-                                        >
-                                            Receipt
-                                        </button>
-                                    `
-                                    : ""
-                            }
 
 
                             <button
@@ -780,7 +1047,7 @@ function renderStudentTable() {
 
 
 /* ==========================================================================
-   11. RESET FORM
+   16. RESET FORM
    ========================================================================== */
 
 function resetStudentForm() {
@@ -792,7 +1059,9 @@ function resetStudentForm() {
 
 
     if (form) {
+
         form.reset();
+
     }
 
 
@@ -809,21 +1078,19 @@ function resetStudentForm() {
 
 
     if (editIndex) {
-        editIndex.value = "";
+
+        editIndex.value =
+            "";
+
     }
 
 
     if (studentCode) {
-        studentCode.value = "";
+
+        studentCode.value =
+            "";
+
     }
-
-
-    studentEditMode =
-        false;
-
-
-    currentEditingStudentCode =
-        null;
 
 
     const codeBlock =
@@ -854,11 +1121,19 @@ function resetStudentForm() {
 
     }
 
+
+    studentEditMode =
+        false;
+
+
+    currentEditingStudentCode =
+        null;
+
 }
 
 
 /* ==========================================================================
-   12. OPEN ADD MODAL
+   17. OPEN ADD MODAL
    ========================================================================== */
 
 function openAddStudentModal() {
@@ -870,15 +1145,13 @@ function openAddStudentModal() {
 
 
     if (!modal) {
+
         return;
+
     }
 
 
     resetStudentForm();
-
-
-    studentEditMode =
-        false;
 
 
     const title =
@@ -918,12 +1191,18 @@ function openAddStudentModal() {
 
 
     if (codeHidden) {
-        codeHidden.value = code;
+
+        codeHidden.value =
+            code;
+
     }
 
 
     if (codePreview) {
-        codePreview.textContent = code;
+
+        codePreview.textContent =
+            code;
+
     }
 
 
@@ -951,11 +1230,17 @@ function openAddStudentModal() {
         joiningInput.value =
             String(
                 now.getDate()
-            ).padStart(2, "0") +
+            ).padStart(
+                2,
+                "0"
+            ) +
             "/" +
             String(
                 now.getMonth() + 1
-            ).padStart(2, "0") +
+            ).padStart(
+                2,
+                "0"
+            ) +
             "/" +
             now.getFullYear();
 
@@ -970,7 +1255,7 @@ function openAddStudentModal() {
 
 
 /* ==========================================================================
-   13. OPEN EDIT MODAL
+   18. OPEN EDIT MODAL
    ========================================================================== */
 
 function openEditStudentModal(
@@ -981,10 +1266,12 @@ function openEditStudentModal(
         studentRecords.find(
             (item) =>
                 String(
-                    item.studentCode
+                    item.studentCode ||
+                    ""
                 ).toUpperCase() ===
                 String(
-                    studentCode
+                    studentCode ||
+                    ""
                 ).toUpperCase()
         );
 
@@ -1007,7 +1294,9 @@ function openEditStudentModal(
 
 
     if (!modal) {
+
         return;
+
     }
 
 
@@ -1036,62 +1325,141 @@ function openEditStudentModal(
     }
 
 
-    studentElement(
-        "form-student-code"
-    ).value =
-        student.studentCode || "";
-
-
-    studentElement(
-        "std-name"
-    ).value =
-        student.studentName || "";
-
-
-    studentElement(
-        "std-email"
-    ).value =
-        student.email || "";
-
-
-    studentElement(
-        "std-class"
-    ).value =
-        student.className || "";
-
-
-    studentElement(
-        "std-seat"
-    ).value =
-        student.seatNumber || "";
-
-
-    studentElement(
-        "std-mobile"
-    ).value =
-        student.mobileNumber || "";
-
-
-    studentElement(
-        "std-shift"
-    ).value =
-        student.shift || "";
-
-
-    studentElement(
-        "std-joining"
-    ).value =
-        formatDateValue(
-            student.joiningDate
+    const codeInput =
+        studentElement(
+            "form-student-code"
         );
 
 
-    studentElement(
-        "std-fee-due-date"
-    ).value =
-        formatDateValue(
-            student.feeDueDate
+    if (codeInput) {
+
+        codeInput.value =
+            student.studentCode ||
+            "";
+
+    }
+
+
+    const nameInput =
+        studentElement(
+            "std-name"
         );
+
+
+    const emailInput =
+        studentElement(
+            "std-email"
+        );
+
+
+    const classInput =
+        studentElement(
+            "std-class"
+        );
+
+
+    const seatInput =
+        studentElement(
+            "std-seat"
+        );
+
+
+    const mobileInput =
+        studentElement(
+            "std-mobile"
+        );
+
+
+    const shiftInput =
+        studentElement(
+            "std-shift"
+        );
+
+
+    const joiningInput =
+        studentElement(
+            "std-joining"
+        );
+
+
+    const feeDueInput =
+        studentElement(
+            "std-fee-due-date"
+        );
+
+
+    if (nameInput) {
+
+        nameInput.value =
+            student.studentName ||
+            "";
+
+    }
+
+
+    if (emailInput) {
+
+        emailInput.value =
+            student.email ||
+            "";
+
+    }
+
+
+    if (classInput) {
+
+        classInput.value =
+            student.className ||
+            "";
+
+    }
+
+
+    if (seatInput) {
+
+        seatInput.value =
+            student.seatNumber ||
+            "";
+
+    }
+
+
+    if (mobileInput) {
+
+        mobileInput.value =
+            student.mobileNumber ||
+            "";
+
+    }
+
+
+    if (shiftInput) {
+
+        shiftInput.value =
+            student.shift ||
+            "";
+
+    }
+
+
+    if (joiningInput) {
+
+        joiningInput.value =
+            formatDateValue(
+                student.joiningDate
+            );
+
+    }
+
+
+    if (feeDueInput) {
+
+        feeDueInput.value =
+            formatDateValue(
+                student.feeDueDate
+            );
+
+    }
 
 
     const codePreview =
@@ -1109,7 +1477,8 @@ function openEditStudentModal(
     if (codePreview) {
 
         codePreview.textContent =
-            student.studentCode || "";
+            student.studentCode ||
+            "";
 
     }
 
@@ -1131,7 +1500,7 @@ function openEditStudentModal(
 
 
 /* ==========================================================================
-   14. CLOSE MODAL
+   19. CLOSE MODAL
    ========================================================================== */
 
 function closeStudentModal() {
@@ -1157,7 +1526,7 @@ function closeStudentModal() {
 
 
 /* ==========================================================================
-   15. VALIDATE FORM
+   20. VALIDATE FORM
    ========================================================================== */
 
 function validateStudentForm() {
@@ -1165,49 +1534,57 @@ function validateStudentForm() {
     const name =
         studentElement(
             "std-name"
-        ).value.trim();
+        )?.value.trim() ||
+        "";
 
 
     const email =
         studentElement(
             "std-email"
-        ).value.trim().toLowerCase();
+        )?.value.trim().toLowerCase() ||
+        "";
 
 
     const className =
         studentElement(
             "std-class"
-        ).value.trim();
+        )?.value.trim() ||
+        "";
 
 
     const seat =
         studentElement(
             "std-seat"
-        ).value.trim();
+        )?.value.trim() ||
+        "";
 
 
     const mobile =
         studentElement(
             "std-mobile"
-        ).value.trim();
+        )?.value.trim() ||
+        "";
 
 
     const shift =
         studentElement(
             "std-shift"
-        ).value;
+        )?.value ||
+        "";
 
 
     const joining =
         studentElement(
             "std-joining"
-        ).value.trim();
+        )?.value.trim() ||
+        "";
 
 
     const feeDueDate =
         studentElement(
             "std-fee-due-date"
-        ).value.trim();
+        )?.value.trim() ||
+        "";
 
 
     if (
@@ -1333,10 +1710,7 @@ function validateStudentForm() {
                 joining,
 
             feeDueDate:
-                feeDueDate,
-
-            feeStatus:
-                "Paid"
+                feeDueDate
 
         }
 
@@ -1346,10 +1720,12 @@ function validateStudentForm() {
 
 
 /* ==========================================================================
-   16. SAVE STUDENT
+   21. SAVE STUDENT
    ========================================================================== */
 
-async function saveStudent(event) {
+async function saveStudent(
+    event
+) {
 
     event.preventDefault();
 
@@ -1387,9 +1763,9 @@ async function saveStudent(event) {
     const code =
         studentElement(
             "form-student-code"
-        ).value
-        .trim()
-        .toUpperCase();
+        )?.value
+            .trim()
+            .toUpperCase();
 
 
     if (!code) {
@@ -1405,7 +1781,7 @@ async function saveStudent(event) {
 
     const saveButton =
         document.querySelector(
-            '#student-form button[type="submit"]'
+            "#student-form button[type='submit']"
         );
 
 
@@ -1424,9 +1800,21 @@ async function saveStudent(event) {
 
     try {
 
+        const studentsCollection =
+            getStudentsCollectionRef();
+
+
+        if (!studentsCollection) {
+
+            throw new Error(
+                "Database is not available."
+            );
+
+        }
+
+
         const reference =
-            window.LibManageDB.student(
-                session.libraryId,
+            studentsCollection.doc(
                 code
             );
 
@@ -1437,7 +1825,7 @@ async function saveStudent(event) {
 
         /*
          * --------------------------------------------------------------
-         * SEAT DUPLICATE PROTECTION
+         * SEAT DUPLICATE CHECK
          * --------------------------------------------------------------
          */
 
@@ -1450,16 +1838,16 @@ async function saveStudent(event) {
                             student.seatNumber ||
                             ""
                         )
-                        .trim()
-                        .toLowerCase();
+                            .trim()
+                            .toLowerCase();
 
 
                     const newSeat =
                         String(
                             data.seatNumber
                         )
-                        .trim()
-                        .toLowerCase();
+                            .trim()
+                            .toLowerCase();
 
 
                     const differentStudent =
@@ -1467,7 +1855,8 @@ async function saveStudent(event) {
                             student.studentCode ||
                             ""
                         )
-                        .toUpperCase() !==
+                            .trim()
+                            .toUpperCase() !==
                         code;
 
 
@@ -1497,25 +1886,6 @@ async function saveStudent(event) {
          */
 
         if (studentEditMode) {
-
-            /*
-             * Keep the existing fee status while editing.
-             */
-
-            const existingStudent =
-                studentRecords.find(
-                    (student) =>
-                        String(
-                            student.studentCode
-                        ).toUpperCase() ===
-                        code
-                );
-
-
-            data.feeStatus =
-                existingStudent?.feeStatus ||
-                "Paid";
-
 
             await reference.update({
 
@@ -1567,6 +1937,12 @@ async function saveStudent(event) {
 
             ...data,
 
+            feeStatus:
+                "Paid",
+
+            status:
+                "Active",
+
             role:
                 "student",
 
@@ -1594,7 +1970,7 @@ async function saveStudent(event) {
 
 
         alert(
-            "Student registered successfully.\n\n" +
+            "Student saved successfully.\n\n" +
             "Student Login Code: " +
             code
         );
@@ -1635,77 +2011,76 @@ async function saveStudent(event) {
 
 
 /* ==========================================================================
-   17. TOGGLE FEE STATUS
+   22. TOGGLE FEE STATUS
    ========================================================================== */
 
 async function toggleStudentFeeStatus(
     studentCode
 ) {
 
-    const session =
-        getStudentLibraryContext();
-
-
-    if (!session) {
-
-        alert(
-            "Session expired. Please login again."
-        );
-
-        return;
-
-    }
-
-
     const student =
         studentRecords.find(
             (item) =>
                 String(
-                    item.studentCode
+                    item.studentCode ||
+                    ""
                 ).toUpperCase() ===
                 String(
-                    studentCode
+                    studentCode ||
+                    ""
                 ).toUpperCase()
         );
 
 
     if (!student) {
+
         return;
+
+    }
+
+
+    const reference =
+        getStudentReference(
+            studentCode
+        );
+
+
+    if (!reference) {
+
+        alert(
+            "Database is not available."
+        );
+
+        return;
+
     }
 
 
     const currentStatus =
-        String(
-            student.feeStatus ||
-            "Paid"
-        )
-        .toLowerCase();
+        getStudentFeeStatus(
+            student
+        );
 
 
     const newStatus =
-        currentStatus === "paid"
+        currentStatus === "Paid"
             ? "Due"
             : "Paid";
 
 
     try {
 
-        await window.LibManageDB
-            .student(
-                session.libraryId,
-                studentCode
-            )
-            .update({
+        await reference.update({
 
-                feeStatus:
-                    newStatus,
+            feeStatus:
+                newStatus,
 
-                updatedAt:
-                    firebase.firestore
-                        .FieldValue
-                        .serverTimestamp()
+            updatedAt:
+                firebase.firestore
+                    .FieldValue
+                    .serverTimestamp()
 
-            });
+        });
 
     }
     catch (error) {
@@ -1726,10 +2101,10 @@ async function toggleStudentFeeStatus(
 
 
 /* ==========================================================================
-   18. PRINT RECEIPT
+   23. PRINT FEE RECEIPT
    ========================================================================== */
 
-function printStudentReceipt(
+function printFeeReceipt(
     studentCode
 ) {
 
@@ -1737,10 +2112,12 @@ function printStudentReceipt(
         studentRecords.find(
             (item) =>
                 String(
-                    item.studentCode
+                    item.studentCode ||
+                    ""
                 ).toUpperCase() ===
                 String(
-                    studentCode
+                    studentCode ||
+                    ""
                 ).toUpperCase()
         );
 
@@ -1756,10 +2133,23 @@ function printStudentReceipt(
     }
 
 
+    if (
+        getStudentFeeStatus(
+            student
+        ) !== "Paid"
+    ) {
+
+        alert(
+            "Receipt is available only for Paid fee."
+        );
+
+        return;
+
+    }
+
+
     const libraryName =
-        localStorage.getItem(
-            "session_library_name"
-        ) ||
+        getStudentLibraryContext()?.libraryName ||
         "Library";
 
 
@@ -1767,7 +2157,7 @@ function printStudentReceipt(
         window.open(
             "",
             "_blank",
-            "width=700,height=800"
+            "width=800,height=700"
         );
 
 
@@ -1783,166 +2173,188 @@ function printStudentReceipt(
 
 
     receiptWindow.document.write(`
-<!DOCTYPE html>
-<html>
-<head>
+        <!DOCTYPE html>
+        <html>
+        <head>
 
-<meta charset="UTF-8">
+            <title>Fee Receipt</title>
 
-<title>Fee Receipt</title>
+            <style>
 
-<style>
+                body {
+                    font-family: Arial, sans-serif;
+                    padding: 40px;
+                    color: #111;
+                }
 
-body {
-    font-family: Arial, sans-serif;
-    padding: 30px;
-    color: #111827;
-}
+                .receipt {
+                    max-width: 650px;
+                    margin: auto;
+                    border: 1px solid #ccc;
+                    padding: 30px;
+                }
 
-.receipt {
-    max-width: 600px;
-    margin: auto;
-    border: 1px solid #d1d5db;
-    padding: 30px;
-}
+                h1 {
+                    margin: 0 0 5px;
+                    text-align: center;
+                }
 
-h1 {
-    margin: 0 0 8px;
-    text-align: center;
-}
+                h2 {
+                    text-align: center;
+                    margin-top: 5px;
+                }
 
-.subtitle {
-    text-align: center;
-    color: #6b7280;
-    margin-bottom: 28px;
-}
+                .line {
+                    border-top: 1px solid #ccc;
+                    margin: 20px 0;
+                }
 
-.row {
-    display: flex;
-    justify-content: space-between;
-    gap: 20px;
-    padding: 10px 0;
-    border-bottom: 1px solid #e5e7eb;
-}
+                .row {
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 8px 0;
+                }
 
-.label {
-    font-weight: 700;
-}
+                .label {
+                    font-weight: 600;
+                }
 
-.status {
-    margin-top: 24px;
-    text-align: center;
-    font-weight: 800;
-    font-size: 18px;
-}
+                .paid {
+                    font-weight: bold;
+                }
 
-.footer {
-    margin-top: 35px;
-    text-align: center;
-    color: #6b7280;
-    font-size: 13px;
-}
+                .footer {
+                    margin-top: 35px;
+                    text-align: center;
+                    font-size: 13px;
+                }
 
-@media print {
-    body {
-        padding: 0;
-    }
+            </style>
 
-    .receipt {
-        border: none;
-    }
-}
+        </head>
 
-</style>
+        <body>
 
-</head>
+            <div class="receipt">
 
-<body>
+                <h1>
+                    ${escapeStudentHtml(
+                        libraryName
+                    )}
+                </h1>
 
-<div class="receipt">
+                <h2>
+                    Fee Receipt
+                </h2>
 
-    <h1>
-        ${escapeStudentHtml(libraryName)}
-    </h1>
+                <div class="line"></div>
 
-    <div class="subtitle">
-        Fee Payment Receipt
-    </div>
+                <div class="row">
+                    <span class="label">
+                        Student Name
+                    </span>
 
-    <div class="row">
-        <span class="label">Student Name</span>
-        <span>
-            ${escapeStudentHtml(
-                student.studentName || "-"
-            )}
-        </span>
-    </div>
+                    <span>
+                        ${escapeStudentHtml(
+                            student.studentName ||
+                            "-"
+                        )}
+                    </span>
+                </div>
 
-    <div class="row">
-        <span class="label">Student Code</span>
-        <span>
-            ${escapeStudentHtml(
-                student.studentCode || "-"
-            )}
-        </span>
-    </div>
+                <div class="row">
+                    <span class="label">
+                        Student Code
+                    </span>
 
-    <div class="row">
-        <span class="label">Seat Number</span>
-        <span>
-            ${escapeStudentHtml(
-                student.seatNumber || "-"
-            )}
-        </span>
-    </div>
+                    <span>
+                        ${escapeStudentHtml(
+                            student.studentCode ||
+                            "-"
+                        )}
+                    </span>
+                </div>
 
-    <div class="row">
-        <span class="label">Class</span>
-        <span>
-            ${escapeStudentHtml(
-                student.className || "-"
-            )}
-        </span>
-    </div>
+                <div class="row">
+                    <span class="label">
+                        Seat Number
+                    </span>
 
-    <div class="row">
-        <span class="label">Shift</span>
-        <span>
-            ${escapeStudentHtml(
-                student.shift || "-"
-            )}
-        </span>
-    </div>
+                    <span>
+                        ${escapeStudentHtml(
+                            student.seatNumber ||
+                            "-"
+                        )}
+                    </span>
+                </div>
 
-    <div class="row">
-        <span class="label">Fee Due Date</span>
-        <span>
-            ${escapeStudentHtml(
-                formatDateValue(
-                    student.feeDueDate
-                ) || "-"
-            )}
-        </span>
-    </div>
+                <div class="row">
+                    <span class="label">
+                        Class
+                    </span>
 
-    <div class="status">
-        PAID
-    </div>
+                    <span>
+                        ${escapeStudentHtml(
+                            student.className ||
+                            "-"
+                        )}
+                    </span>
+                </div>
 
-    <div class="footer">
-        Thank you for your payment.
-    </div>
+                <div class="row">
+                    <span class="label">
+                        Shift
+                    </span>
 
-</div>
+                    <span>
+                        ${escapeStudentHtml(
+                            student.shift ||
+                            "-"
+                        )}
+                    </span>
+                </div>
 
-<script>
-window.onload = function () {
-    window.print();
-};
-<\/script>
+                <div class="row">
+                    <span class="label">
+                        Fee Due Date
+                    </span>
 
-</body>
-</html>
+                    <span>
+                        ${escapeStudentHtml(
+                            formatDateValue(
+                                student.feeDueDate
+                            ) ||
+                            "-"
+                        )}
+                    </span>
+                </div>
+
+                <div class="row">
+                    <span class="label">
+                        Fee Status
+                    </span>
+
+                    <span class="paid">
+                        PAID
+                    </span>
+                </div>
+
+                <div class="line"></div>
+
+                <div class="footer">
+                    Fee payment receipt
+                </div>
+
+            </div>
+
+            <script>
+                window.onload = function () {
+                    window.print();
+                };
+            <\/script>
+
+        </body>
+        </html>
     `);
 
 
@@ -1952,7 +2364,7 @@ window.onload = function () {
 
 
 /* ==========================================================================
-   19. DELETE STUDENT
+   24. DELETE STUDENT
    ========================================================================== */
 
 async function deleteStudent(
@@ -1978,10 +2390,12 @@ async function deleteStudent(
         studentRecords.find(
             (item) =>
                 String(
-                    item.studentCode
+                    item.studentCode ||
+                    ""
                 ).toUpperCase() ===
                 String(
-                    studentCode
+                    studentCode ||
+                    ""
                 ).toUpperCase()
         );
 
@@ -2004,25 +2418,37 @@ async function deleteStudent(
 
 
     if (!confirmed) {
+
         return;
+
     }
 
 
     try {
 
+        /*
+         * --------------------------------------------------------------
+         * SAVE HISTORY
+         * --------------------------------------------------------------
+         */
+
         const historyReference =
             window.db
                 .collection(
-                    "libmanage_secure_v2"
+                    "libcontrol_libraries"
                 )
                 .doc(
-                    session.libraryId
+                    getStudentLibraryId()
                 )
                 .collection(
                     "student_history"
                 )
                 .doc(
-                    studentCode
+                    String(
+                        studentCode
+                    )
+                        .trim()
+                        .toUpperCase()
                 );
 
 
@@ -2069,7 +2495,7 @@ async function deleteStudent(
                 "Paid",
 
             libraryId:
-                session.libraryId,
+                getStudentLibraryId(),
 
             historyAt:
                 firebase.firestore
@@ -2088,12 +2514,22 @@ async function deleteStudent(
         });
 
 
-        await window.LibManageDB
-            .student(
-                session.libraryId,
+        const reference =
+            getStudentReference(
                 studentCode
-            )
-            .delete();
+            );
+
+
+        if (!reference) {
+
+            throw new Error(
+                "Student database reference unavailable."
+            );
+
+        }
+
+
+        await reference.delete();
 
 
         alert(
@@ -2119,7 +2555,7 @@ async function deleteStudent(
 
 
 /* ==========================================================================
-   20. STUDENT VIEW
+   25. STUDENT VIEW
    ========================================================================== */
 
 function viewStudent(
@@ -2130,16 +2566,20 @@ function viewStudent(
         studentRecords.find(
             (item) =>
                 String(
-                    item.studentCode
+                    item.studentCode ||
+                    ""
                 ).toUpperCase() ===
                 String(
-                    studentCode
+                    studentCode ||
+                    ""
                 ).toUpperCase()
         );
 
 
     if (!student) {
+
         return;
+
     }
 
 
@@ -2174,10 +2614,12 @@ function viewStudent(
             student.shift ||
             "-"
         ) +
-        "\nFee Status: " +
+        "\nJoining Date: " +
         (
-            student.feeStatus ||
-            "Paid"
+            formatDateValue(
+                student.joiningDate
+            ) ||
+            "-"
         ) +
         "\nFee Due Date: " +
         (
@@ -2185,6 +2627,10 @@ function viewStudent(
                 student.feeDueDate
             ) ||
             "-"
+        ) +
+        "\nFee Status: " +
+        getStudentFeeStatus(
+            student
         )
     );
 
@@ -2192,7 +2638,7 @@ function viewStudent(
 
 
 /* ==========================================================================
-   21. TABLE ACTIONS
+   26. TABLE ACTIONS
    ========================================================================== */
 
 function bindStudentTableActions() {
@@ -2204,13 +2650,53 @@ function bindStudentTableActions() {
 
 
     if (!tableBody) {
+
         return;
+
     }
 
 
     tableBody.addEventListener(
         "click",
         (event) => {
+
+            const feeToggle =
+                event.target.closest(
+                    "[data-fee-toggle]"
+                );
+
+
+            if (feeToggle) {
+
+                toggleStudentFeeStatus(
+                    feeToggle.getAttribute(
+                        "data-fee-toggle"
+                    )
+                );
+
+                return;
+
+            }
+
+
+            const receiptButton =
+                event.target.closest(
+                    "[data-fee-receipt]"
+                );
+
+
+            if (receiptButton) {
+
+                printFeeReceipt(
+                    receiptButton.getAttribute(
+                        "data-fee-receipt"
+                    )
+                );
+
+                return;
+
+            }
+
 
             const editButton =
                 event.target.closest(
@@ -2250,44 +2736,6 @@ function bindStudentTableActions() {
             }
 
 
-            const feeButton =
-                event.target.closest(
-                    "[data-fee-toggle]"
-                );
-
-
-            if (feeButton) {
-
-                toggleStudentFeeStatus(
-                    feeButton.getAttribute(
-                        "data-fee-toggle"
-                    )
-                );
-
-                return;
-
-            }
-
-
-            const receiptButton =
-                event.target.closest(
-                    "[data-student-receipt]"
-                );
-
-
-            if (receiptButton) {
-
-                printStudentReceipt(
-                    receiptButton.getAttribute(
-                        "data-student-receipt"
-                    )
-                );
-
-                return;
-
-            }
-
-
             const viewButton =
                 event.target.closest(
                     "[data-student-view]"
@@ -2311,7 +2759,7 @@ function bindStudentTableActions() {
 
 
 /* ==========================================================================
-   22. MODAL EVENTS
+   27. MODAL EVENTS
    ========================================================================== */
 
 function bindStudentModalEvents() {
@@ -2430,7 +2878,7 @@ function bindStudentModalEvents() {
 
 
 /* ==========================================================================
-   23. SEARCH
+   28. SEARCH
    ========================================================================== */
 
 function bindStudentSearch() {
@@ -2442,7 +2890,9 @@ function bindStudentSearch() {
 
 
     if (!input) {
+
         return;
+
     }
 
 
@@ -2459,7 +2909,7 @@ function bindStudentSearch() {
 
 
 /* ==========================================================================
-   24. INITIALIZE
+   29. INITIALIZE
    ========================================================================== */
 
 document.addEventListener(
@@ -2487,7 +2937,9 @@ document.addEventListener(
 
 
             if (!authenticated) {
+
                 return;
+
             }
 
         }
@@ -2506,7 +2958,7 @@ document.addEventListener(
 
 
 /* ==========================================================================
-   25. PUBLIC API
+   30. PUBLIC API
    ========================================================================== */
 
 window.LibManageStudents = {
@@ -2526,15 +2978,15 @@ window.LibManageStudents = {
     closeModal:
         closeStudentModal,
 
-    toggleFeeStatus:
+    toggleFee:
         toggleStudentFeeStatus,
 
     printReceipt:
-        printStudentReceipt
+        printFeeReceipt
 
 };
 
 
 console.log(
-    "[LibControl] Students module loaded successfully."
+    "[LibManage] Students module loaded successfully."
 );
