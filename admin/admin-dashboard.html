@@ -29,7 +29,7 @@
 
     <link
         rel="preconnect"
-        href="https://fonts.gstatic.com"
+        href="https://fonts.googleapis.com"
         crossorigin
     >
 
@@ -71,7 +71,6 @@
 
     <!-- =====================================================
          DASHBOARD VISUAL STYLES
-         Based on LibControl dashboard design
          ===================================================== -->
 
     <style>
@@ -224,84 +223,6 @@
             color: #111827;
 
             word-break: break-word;
-
-        }
-
-
-        /* =====================================================
-           SUMMARY CARDS
-           ===================================================== */
-
-        .dashboard-summary-grid {
-
-            display: grid;
-
-            grid-template-columns:
-                repeat(
-                    4,
-                    minmax(
-                        0,
-                        1fr
-                    )
-                );
-
-            gap: 18px;
-
-            margin-bottom: 24px;
-
-        }
-
-
-        .dashboard-stat-card {
-
-            padding: 20px;
-
-            border-radius: 14px;
-
-            background:
-                rgba(
-                    255,
-                    255,
-                    255,
-                    0.7
-                );
-
-            border:
-                1px solid
-                rgba(
-                    0,
-                    0,
-                    0,
-                    0.06
-                );
-
-        }
-
-
-        .dashboard-stat-card span {
-
-            display: block;
-
-            margin-bottom: 8px;
-
-            font-size: 0.82rem;
-
-            color: #6b7280;
-
-            font-weight: 500;
-
-        }
-
-
-        .dashboard-stat-card strong {
-
-            display: block;
-
-            font-size: 1.5rem;
-
-            color: #111827;
-
-            font-weight: 700;
 
         }
 
@@ -494,26 +415,6 @@
            ===================================================== */
 
         @media (
-            max-width: 1100px
-        ) {
-
-            .dashboard-summary-grid {
-
-                grid-template-columns:
-                    repeat(
-                        2,
-                        minmax(
-                            0,
-                            1fr
-                        )
-                    );
-
-            }
-
-        }
-
-
-        @media (
             max-width: 900px
         ) {
 
@@ -526,20 +427,6 @@
 
 
             .dashboard-action-grid {
-
-                grid-template-columns:
-                    1fr;
-
-            }
-
-        }
-
-
-        @media (
-            max-width: 600px
-        ) {
-
-            .dashboard-summary-grid {
 
                 grid-template-columns:
                     1fr;
@@ -762,88 +649,6 @@
 
 
                 </div>
-
-            </section>
-
-
-            <!-- =================================================
-                 SUMMARY CARDS
-                 ================================================= -->
-
-            <section
-                class="
-                    dashboard-summary-grid
-                "
-            >
-
-
-                <div
-                    class="dashboard-stat-card"
-                >
-
-                    <span>
-                        Total Students
-                    </span>
-
-                    <strong
-                        id="total-students-count"
-                    >
-                        0
-                    </strong>
-
-                </div>
-
-
-                <div
-                    class="dashboard-stat-card"
-                >
-
-                    <span>
-                        Active Students
-                    </span>
-
-                    <strong
-                        id="active-students-count"
-                    >
-                        0
-                    </strong>
-
-                </div>
-
-
-                <div
-                    class="dashboard-stat-card"
-                >
-
-                    <span>
-                        Fee Due
-                    </span>
-
-                    <strong
-                        id="fee-due-count"
-                    >
-                        0
-                    </strong>
-
-                </div>
-
-
-                <div
-                    class="dashboard-stat-card"
-                >
-
-                    <span>
-                        Available Seats
-                    </span>
-
-                    <strong
-                        id="available-seats-count"
-                    >
-                        0
-                    </strong>
-
-                </div>
-
 
             </section>
 
@@ -1073,12 +878,6 @@
 
 
     async function initializeAdminDashboard() {
-
-        /*
-         * ------------------------------------------------------
-         * Wait for Firebase Admin session
-         * ------------------------------------------------------
-         */
 
         const authenticated =
             await requireAdminSession();
